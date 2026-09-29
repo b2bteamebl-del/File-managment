@@ -1,16 +1,45 @@
 import express from 'express';
 import path from 'path';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { createServer as createViteServer } from 'vite';
-import authRouter from './server/routes/auth.js';
-import filesRouter from './server/routes/files.js';
-import rmsRouter from './server/routes/rms.js';
-import reportsRouter from './server/routes/reports.js';
-import settingsRouter from './server/routes/settings.js';
-import syncRouter from './server/routes/sync.js';
-import auditRouter from './server/routes/audit.js';
-import locationsRouter from './server/routes/locations.js';
+
+// When invoked directly via "node server.ts" without tsx loader, auto-spawn with --import tsx
+if (!process.env.__TSX_RUNNING__ && !process.execArgv.some(a => a.includes('tsx'))) {
+  const child = spawn(process.execPath, ['--import', 'tsx', fileURLToPath(import.meta.url), ...process.argv.slice(2)], {
+    stdio: 'inherit',
+    env: { ...process.env, __TSX_RUNNING__: '1' }
+  });
+  child.on('exit', (code) => process.exit(code ?? 0));
+} else {
+  startServer().catch(err => {
+    console.error('[Team Data System] Fatal startup error:', err);
+    process.exit(1);
+  });
+}
 
 async function startServer() {
+  // Dynamically import routes so tsx loader is active
+  const [
+    { default: authRouter },
+    { default: filesRouter },
+    { default: rmsRouter },
+    { default: reportsRouter },
+    { default: settingsRouter },
+    { default: syncRouter },
+    { default: auditRouter },
+    { default: locationsRouter }
+  ] = await Promise.all([
+    import('./server/routes/auth.js'),
+    import('./server/routes/files.js'),
+    import('./server/routes/rms.js'),
+    import('./server/routes/reports.js'),
+    import('./server/routes/settings.js'),
+    import('./server/routes/sync.js'),
+    import('./server/routes/audit.js'),
+    import('./server/routes/locations.js')
+  ]);
+
   const app = express();
   const PORT = parseInt(process.env.PORT || '3000', 10);
   const isProduction = process.env.NODE_ENV === 'production';
@@ -60,8 +89,3 @@ async function startServer() {
     console.log(`[Team Data System] Connected Spreadsheet ID: 1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI`);
   });
 }
-
-startServer().catch(err => {
-  console.error('[Team Data System] Fatal startup error:', err);
-  process.exit(1);
-});

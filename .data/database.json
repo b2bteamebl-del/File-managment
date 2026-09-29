@@ -17,15 +17,16 @@
     {
       "id": "usr_mentor12345",
       "username": "12345",
-      "passwordHash": "d38b7a90a203727add0c6f42810f96cf8af5670c74a09ce912cb84249e7217c19e0087003439e4d4453b684bbc2a2b6a4dd9dfbc4ef5d76c851fe149781a47a3",
-      "salt": "cd38a341a8a6e802359fb9647332f81e",
+      "passwordHash": "b3c9a95b0f5c16f7e470d679505b84eec7587742adbc0b7b68a33c12edfa14b73587d512895cbdbe6d58fa0fa2dd991a2e591cd27d4d2efe06d293943aafca4b",
+      "salt": "101d211e03d1d5165e10d2fbc0bffe54",
       "role": "Mentor",
       "name": "EBL Senior Business Mentor",
       "email": "mentor12345@ebl.com.bd",
       "mobile": "+8801711000002",
       "status": "Active",
-      "mustChangePassword": true,
-      "createdAt": "2026-09-27T04:45:19.303Z"
+      "mustChangePassword": false,
+      "createdAt": "2026-09-27T04:45:19.303Z",
+      "lastLogin": "2026-09-29T06:10:03.639Z"
     },
     {
       "id": "usr_rm104393",
@@ -40,7 +41,7 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-09-27T04:45:25.351Z"
+      "lastLogin": "2026-09-29T06:22:25.135Z"
     },
     {
       "id": "usr_rm105210",
@@ -232,6 +233,44 @@
   ],
   "attachments": [],
   "auditLogs": [
+    {
+      "userId": "usr_rm104393",
+      "username": "104393",
+      "role": "RM",
+      "rmCode": "104393",
+      "action": "LOGIN",
+      "details": "User 104393 (RM) logged in successfully",
+      "id": "log_1790662945136_lzqed",
+      "timestamp": "2026-09-29T06:22:25.136Z"
+    },
+    {
+      "userId": "usr_rm104393",
+      "username": "104393",
+      "role": "RM",
+      "rmCode": "104393",
+      "action": "LOGIN",
+      "details": "User 104393 (RM) logged in successfully",
+      "id": "log_1790662811689_ql2x9",
+      "timestamp": "2026-09-29T06:20:11.689Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "PASSWORD_CHANGE",
+      "details": "User 12345 successfully updated their password",
+      "id": "log_1790662228249_xpvdx",
+      "timestamp": "2026-09-29T06:10:28.249Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1790662203640_ceydp",
+      "timestamp": "2026-09-29T06:10:03.640Z"
+    },
     {
       "userId": "usr_admin0",
       "username": "Admin0",

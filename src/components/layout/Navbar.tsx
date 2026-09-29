@@ -15,6 +15,7 @@ import {
 import { useAuth } from '../../context/AuthContext.js';
 import { DhakaClock } from '../common/DhakaClock.js';
 import { ChangePasswordModal } from '../common/ChangePasswordModal.js';
+import { NotificationBell } from '../common/NotificationBell.js';
 import { api } from '../../lib/api.js';
 
 interface NavbarProps {
@@ -145,6 +146,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
                 </button>
               </div>
             )}
+
+            {/* Notification Bell for RM updates and supervisor actions */}
+            <NotificationBell onNavigateToFile={() => onNavigate && onNavigate('files')} />
 
             {/* User Dropdown */}
             <div className="relative">

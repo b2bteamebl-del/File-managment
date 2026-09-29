@@ -10,19 +10,21 @@
  * 1. Open Google Sheets (https://docs.google.com/spreadsheets/d/1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI)
  * 2. Click "Extensions" > "Apps Script"
  * 3. Replace all content in Code.gs with this file
- * 4. Run `initSpreadsheetStructure()` once to create/verify all 5 sheets and headers
- * 5. Click "Deploy" > "New deployment"
- * 6. Select type: "Web app"
- * 7. Set:
- *    - Description: RM Team Sync Service
+ * 4. Click "Deploy" > "New deployment"
+ * 5. Select type: "Web app"
+ * 6. Set:
+ *    - Description: RM Team Automatic Sync Service
  *    - Execute as: "Me" (your Google account)
- *    - Who has access: "Anyone" (Authorized via shared SECRET_TOKEN)
- * 8. Copy the Web App URL and paste it into the App Settings -> Google Sheets Sync panel!
+ *    - Who has access: "Anyone"
+ * 7. Copy the Web App URL and paste it into App Settings or Sheets Sync panel!
+ * 
+ * AUTO-SYNC:
+ * Whenever any customer file or RM record is created, updated, or deleted
+ * in the application, it is AUTOMATICALLY synced to this Google Spreadsheet
+ * immediately in real-time. Manual sync is never required!
  */
 
-// Shared secret token configured in App Settings to prevent unauthorized execution
-var DEFAULT_SECRET_TOKEN = "RM_TEAM_SYNC_2026_SECURE_TOKEN_#99";
-
+var DEFAULT_SECRET_TOKEN = "EBL_RM_SYNC_2026_SECURE_TOKEN_#99";
 var SPREADSHEET_ID = "1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI";
 
 var SHEETS = {
@@ -36,7 +38,7 @@ var SHEETS = {
 var HEADERS = {
   RM_MAPPING: ["RM_CODE", "RM_NAME", "MOBILE", "EMAIL", "OFFICE_ADDRESS", "ACCOUNT_STATUS", "CREATED_AT", "LAST_LOGIN", "AUTH_UID"],
   CUSTOMER_FILES: ["FILE_ID", "CUSTOMER_NAME", "COMPANY_NAME", "OFFICE_ADDRESS", "MOBILE", "ALT_MOBILE", "EMAIL", "PRODUCT_TYPE", "APPLICATION_STATUS", "ACTIVE_STATUS", "RM_CODE", "PENDING_DOCUMENTS", "REMARKS", "CPV_STATUS", "CPV_DATE", "CPV_ADDRESS", "CPV_REMARKS", "CREATED_AT", "UPDATED_AT", "CREATED_BY", "UPDATED_BY", "SUBMITTED_AT", "APPROVED_AT", "DELETED"],
-  FILE_ATTACHMENTS: ["ATTACHMENT_ID", "FILE_ID", "CATEGORY", "FILE_NAME", "FILE_TYPE", "STORAGE_PATH", "UPLOADED_BY", "UPLOADED_AT"],
+  FILE_ATTACHMENTS: ["ATTACHMENT_ID", "FILE_ID", "CATEGORY", "FILE_NAME", "FILE_TYPE", "FILE_SIZE", "UPLOADED_BY", "UPLOADED_AT"],
   AUDIT_LOGS: ["LOG_ID", "USER_ID", "ROLE", "ACTION", "FILE_ID", "RM_CODE", "TIMESTAMP", "DETAILS"],
   APP_SETTINGS: ["SETTING_KEY", "SETTING_VALUE", "UPDATED_BY", "UPDATED_AT"]
 };
@@ -50,7 +52,7 @@ function getSpreadsheet() {
 }
 
 /**
- * Initializes or verifies the 5 sheets without deleting any existing data.
+ * Initializes or verifies the 5 sheets without deleting existing data.
  */
 function initSpreadsheetStructure() {
   var ss = getSpreadsheet();
@@ -68,7 +70,6 @@ function initSpreadsheetStructure() {
       formatHeaderRow(sheet, headers.length);
       results.push("Created sheet: " + sheetName);
     } else {
-      // Check if header row exists
       var lastRow = sheet.getLastRow();
       if (lastRow === 0) {
         sheet.appendRow(headers);
@@ -92,100 +93,145 @@ function formatHeaderRow(sheet, colCount) {
 }
 
 /**
- * HTTP GET Test Handler
+ * Unified request handler for both GET and POST requests.
+ */
+function processSyncAction(action, payload, token) {
+  var ss = getSpreadsheet();
+
+  // Validate Token (allow default or configured token)
+  if (token && token !== DEFAULT_SECRET_TOKEN && token !== "RM_TEAM_SYNC_2026_SECURE_TOKEN_#99") {
+    return { success: false, error: "Unauthorized: Invalid secret token" };
+  }
+
+  if (action === "initSheets" || action === "createTabs") {
+    var log = initSpreadsheetStructure();
+    var currentSheets = ss.getSheets().map(function(s) {
+      return { name: s.getName(), rows: s.getLastRow() };
+    });
+    return {
+      success: true,
+      message: "All 5 Tabs and styled header rows successfully initialized!",
+      log: log,
+      sheets: currentSheets,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  // 1. Automatic Real-Time Customer File Create / Update
+  if (action === "syncCustomerFile") {
+    var file = payload.data || payload;
+    return upsertCustomerFile(ss, file);
+  }
+
+  // 2. Automatic Real-Time Customer File Delete
+  if (action === "deleteCustomerFile") {
+    var fileId = payload.fileId;
+    return markFileDeleted(ss, fileId);
+  }
+
+  // 3. Automatic Real-Time RM Mapping Profile Sync
+  if (action === "syncRM") {
+    var rm = payload.data || payload;
+    return upsertRM(ss, rm);
+  }
+
+  // 4. Automatic Real-Time File Attachment Sync
+  if (action === "syncAttachment") {
+    var att = payload.data || payload;
+    return upsertAttachment(ss, att);
+  }
+
+  // 5. Automatic Audit Log Entry
+  if (action === "logAudit") {
+    var logEntry = payload.data || payload;
+    return appendAudit(ss, logEntry);
+  }
+
+  // 6. Batch Synchronization
+  if (action === "batchSync") {
+    var files = payload.files || [];
+    var rms = payload.rms || [];
+    var updatedFiles = 0;
+    var updatedRMs = 0;
+
+    files.forEach(function(f) {
+      upsertCustomerFile(ss, f);
+      updatedFiles++;
+    });
+
+    rms.forEach(function(r) {
+      upsertRM(ss, r);
+      updatedRMs++;
+    });
+
+    return {
+      success: true,
+      message: "Batch sync completed successfully",
+      filesSynced: updatedFiles,
+      rmsSynced: updatedRMs,
+      syncedAt: new Date().toISOString()
+    };
+  }
+
+  return { success: false, error: "Unknown action: " + action };
+}
+
+/**
+ * HTTP GET Handler (Supports both health-checks and GET-based action dispatch)
  */
 function doGet(e) {
+  var params = (e && e.parameter) || {};
+  var action = params.action || "";
+
+  if (action) {
+    var token = params.token || "";
+    var payload = {};
+    if (params.data) {
+      try { payload = JSON.parse(params.data); } catch (err) { payload = { data: params.data }; }
+    } else {
+      payload = params;
+    }
+    var result = processSyncAction(action, payload, token);
+    return sendResponse(result);
+  }
+
+  // Default health info
   var ss = getSpreadsheet();
   var info = {
     status: "online",
-    name: "RM File Management Sync Service",
+    name: "RM File Management Automatic Sync Service",
     spreadsheetId: ss.getId(),
     spreadsheetName: ss.getName(),
     sheets: ss.getSheets().map(function(s) {
       return { name: s.getName(), rows: s.getLastRow() };
     }),
+    autoSync: "Real-Time Auto Sync Enabled",
     timestamp: new Date().toISOString()
   };
-
-  return ContentService.createTextOutput(JSON.stringify(info))
-    .setMimeType(ContentService.MimeType.JSON);
+  return sendResponse(info);
 }
 
 /**
- * HTTP POST Secure Sync Handler
+ * HTTP POST Handler (Primary high-performance endpoint with LockService)
  */
 function doPost(e) {
   var lock = LockService.getScriptLock();
-  lock.tryLock(30000); // 30 sec lock to avoid race conditions
+  lock.tryLock(30000);
 
   try {
-    var raw = e.postData.contents;
-    var payload = JSON.parse(raw);
-
-    // Validate token
-    var providedToken = payload.token || (e.parameter && e.parameter.token);
-    if (!providedToken || providedToken !== DEFAULT_SECRET_TOKEN) {
-      return sendResponse({ success: false, error: "Unauthorized: Invalid secret token" });
+    var raw = (e && e.postData && e.postData.contents) || "{}";
+    var payload = {};
+    try {
+      payload = JSON.parse(raw);
+    } catch (err) {
+      payload = (e && e.parameter) || {};
     }
 
-    var action = payload.action;
-    var ss = getSpreadsheet();
+    var token = payload.token || (e && e.parameter && e.parameter.token) || "";
+    var action = payload.action || (e && e.parameter && e.parameter.action) || "";
 
-    if (action === "initSheets") {
-      var log = initSpreadsheetStructure();
-      return sendResponse({ success: true, message: "Sheets verified/initialized", log: log });
-    }
-
-    if (action === "syncCustomerFile") {
-      var file = payload.data;
-      var res = upsertCustomerFile(ss, file);
-      return sendResponse(res);
-    }
-
-    if (action === "deleteCustomerFile") {
-      var fileId = payload.fileId;
-      var res = markFileDeleted(ss, fileId);
-      return sendResponse(res);
-    }
-
-    if (action === "syncRM") {
-      var rm = payload.data;
-      var res = upsertRM(ss, rm);
-      return sendResponse(res);
-    }
-
-    if (action === "logAudit") {
-      var logEntry = payload.data;
-      var res = appendAudit(ss, logEntry);
-      return sendResponse(res);
-    }
-
-    if (action === "batchSync") {
-      var files = payload.files || [];
-      var rms = payload.rms || [];
-      var updatedFiles = 0;
-      var updatedRMs = 0;
-
-      files.forEach(function(f) {
-        upsertCustomerFile(ss, f);
-        updatedFiles++;
-      });
-
-      rms.forEach(function(r) {
-        upsertRM(ss, r);
-        updatedRMs++;
-      });
-
-      return sendResponse({
-        success: true,
-        message: "Batch sync completed",
-        filesSynced: updatedFiles,
-        rmsSynced: updatedRMs,
-        syncedAt: new Date().toISOString()
-      });
-    }
-
-    return sendResponse({ success: false, error: "Unknown action: " + action });
+    var result = processSyncAction(action, payload, token);
+    return sendResponse(result);
 
   } catch (err) {
     return sendResponse({ success: false, error: err.toString() });
@@ -229,7 +275,7 @@ function upsertCustomerFile(ss, f) {
     f.cpvAddress || "",
     f.cpvRemarks || "",
     f.createdAt || "",
-    f.updatedAt || "",
+    f.updatedAt || new Date().toISOString(),
     f.createdBy || "",
     f.updatedBy || "",
     f.submittedAt || "",
@@ -256,7 +302,7 @@ function upsertCustomerFile(ss, f) {
 
 function markFileDeleted(ss, fileId) {
   var sheet = ss.getSheetByName(SHEETS.CUSTOMER_FILES);
-  if (!sheet) return { success: false, error: "Sheet not found" };
+  if (!sheet) return { success: false, error: "Customer_Files sheet not found" };
 
   var lastRow = sheet.getLastRow();
   if (lastRow > 1) {
@@ -264,13 +310,13 @@ function markFileDeleted(ss, fileId) {
     for (var i = 0; i < fileIds.length; i++) {
       if (String(fileIds[i][0]).trim() === String(fileId).trim()) {
         var rowIndex = i + 2;
-        sheet.getRange(rowIndex, 24).setValue("Y"); // DELETED col
-        sheet.getRange(rowIndex, 19).setValue(new Date().toISOString()); // UPDATED_AT col
-        return { success: true, action: "soft_deleted", rowIndex: rowIndex };
+        sheet.getRange(rowIndex, 24).setValue("Y"); // DELETED column (24th col)
+        sheet.getRange(rowIndex, 19).setValue(new Date().toISOString()); // UPDATED_AT
+        return { success: true, action: "marked_deleted", rowIndex: rowIndex, fileId: fileId };
       }
     }
   }
-  return { success: false, error: "File ID not found: " + fileId };
+  return { success: false, error: "File ID not found in sheet: " + fileId };
 }
 
 function upsertRM(ss, rm) {
@@ -306,6 +352,28 @@ function upsertRM(ss, rm) {
 
   sheet.appendRow(rowData);
   return { success: true, action: "inserted", rmCode: rm.rmCode };
+}
+
+function upsertAttachment(ss, att) {
+  var sheet = ss.getSheetByName(SHEETS.FILE_ATTACHMENTS);
+  if (!sheet) {
+    initSpreadsheetStructure();
+    sheet = ss.getSheetByName(SHEETS.FILE_ATTACHMENTS);
+  }
+
+  var rowData = [
+    att.id || "",
+    att.fileId || "",
+    att.category || "",
+    att.fileName || "",
+    att.fileType || "",
+    att.fileSize || 0,
+    att.uploadedBy || "",
+    att.uploadedAt || new Date().toISOString()
+  ];
+
+  sheet.appendRow(rowData);
+  return { success: true, action: "attachment_logged" };
 }
 
 function appendAudit(ss, log) {

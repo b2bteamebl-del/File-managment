@@ -38,6 +38,13 @@ router.post('/test', async (req: AuthenticatedRequest, res: Response) => {
   return res.json(result);
 });
 
+// Initialize Tabs and Headers in Google Sheets
+router.post('/init-sheets', async (req: AuthenticatedRequest, res: Response) => {
+  const { url, token } = req.body;
+  const result = await SheetsSyncService.initSheets(url, token);
+  return res.json(result);
+});
+
 // Trigger Manual Sync
 router.post('/trigger', async (req: AuthenticatedRequest, res: Response) => {
   const result = await SheetsSyncService.batchSyncAll();

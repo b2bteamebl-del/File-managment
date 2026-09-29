@@ -136,6 +136,18 @@ router.put('/:rmCode', (req: AuthenticatedRequest, res: Response) => {
     details: `Updated RM information for ${targetRmCode}`,
   });
 
+  SheetsSyncService.syncRM({
+    rmCode: targetRmCode,
+    rmName: updated ? updated.name : targetUser.name,
+    mobile: updated ? updated.mobile : targetUser.mobile,
+    email: updated ? updated.email : targetUser.email,
+    officeAddress: 'Main Office',
+    accountStatus: targetUser.status,
+    createdAt: targetUser.createdAt,
+    lastLogin: targetUser.lastLogin,
+    authUid: targetUser.id,
+  }).catch(e => console.error('Failed to auto-sync updated RM to sheets:', e));
+
   return res.json({ success: true, user: updated });
 });
 

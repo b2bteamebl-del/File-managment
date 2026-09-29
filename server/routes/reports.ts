@@ -117,6 +117,7 @@ router.get('/summary', (req: AuthenticatedRequest, res: Response) => {
     statusDistribution,
     productDistribution,
     pendingDocCounts,
+    pendingDocFiles: filteredFiles.filter(f => f.pendingDocuments && f.pendingDocuments.length > 0),
     rmPerformance,
     totalRecords: filteredFiles.length,
   });

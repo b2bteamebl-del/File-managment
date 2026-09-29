@@ -16,6 +16,7 @@ import { SettingsPage } from './pages/SettingsPage.js';
 
 import { LocationMonitorPage } from './pages/LocationMonitorPage.js';
 import { FloatingNav } from './components/common/FloatingNav.js';
+import { MobileSMSBanner } from './components/common/MobileSMSBanner.js';
 
 function MainApp() {
   const { user, isLoading } = useAuth();
@@ -98,6 +99,9 @@ function MainApp() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
+      {/* Mobile SMS Alert Pop-Down Banner & Chime */}
+      <MobileSMSBanner onNavigateToFiles={() => setCurrentTab('files')} />
+
       <Navbar
         onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
         isSidebarOpen={isSidebarOpen}

@@ -6,6 +6,7 @@ import { db, ATTACHMENTS_DIR, StoredAttachment } from '../db.js';
 import { requireAuth, AuthenticatedRequest } from '../middleware/auth.js';
 import { CustomerFile, FileAttachment } from '../../src/types/index.js';
 import { SheetsSyncService } from '../sheetsSync.js';
+import { SMSService } from '../smsService.js';
 
 const router = Router();
 
@@ -69,7 +70,11 @@ router.get('/', requireAuth, (req: AuthenticatedRequest, res: Response) => {
     files = files.filter(f => f.cpvStatus === cpvStatus);
   }
   if (pendingDoc && pendingDoc !== 'all') {
-    files = files.filter(f => f.pendingDocuments && f.pendingDocuments.includes(pendingDoc));
+    if (pendingDoc === 'has_pending' || pendingDoc === 'ANY') {
+      files = files.filter(f => f.pendingDocuments && f.pendingDocuments.length > 0);
+    } else {
+      files = files.filter(f => f.pendingDocuments && f.pendingDocuments.includes(pendingDoc));
+    }
   }
   if (startDate) {
     const start = new Date(startDate).getTime();
@@ -326,6 +331,51 @@ router.put('/:fileId', requireAuth, async (req: AuthenticatedRequest, res: Respo
     details: `Updated file ${updated.fileId}. Status: ${updated.applicationStatus}, Active: ${updated.activeStatus}`,
   });
 
+  // Notify RM if updated by Admin or Mentor
+  if ((user.role === 'Admin' || user.role === 'Mentor') && existing.rmCode) {
+    const changes: string[] = [];
+    if (existing.applicationStatus !== updated.applicationStatus) {
+      changes.push(`Status changed from "${existing.applicationStatus}" to "${updated.applicationStatus}"`);
+    }
+    if (existing.activeStatus !== updated.activeStatus) {
+      changes.push(`Active card changed from "${existing.activeStatus}" to "${updated.activeStatus}"`);
+    }
+    if (existing.remarks !== updated.remarks && updated.remarks) {
+      changes.push(`Remarks: "${updated.remarks.substring(0, 60)}"`);
+    }
+    if (JSON.stringify(existing.pendingDocuments || []) !== JSON.stringify(updated.pendingDocuments || [])) {
+      changes.push(`Pending documents: ${updated.pendingDocuments?.length || 0} docs`);
+    }
+    const changeSummary = changes.length > 0 ? changes.join(' • ') : 'Portfolio file details updated by supervisor.';
+
+    db.addNotification({
+      recipientRmCode: existing.rmCode,
+      fileId: updated.fileId,
+      customerName: updated.customerName,
+      action: 'UPDATE',
+      performedBy: user.username,
+      performedByName: user.name || (user.role === 'Admin' ? 'System Administrator' : 'Senior Team Mentor'),
+      performedByRole: user.role as 'Admin' | 'Mentor',
+      title: `File ${updated.fileId} updated by ${user.role}`,
+      message: `${user.name} (${user.role}) modified customer file "${updated.customerName}": ${changeSummary}`,
+      metadata: {
+        oldValue: existing.applicationStatus,
+        newValue: updated.applicationStatus,
+      },
+    });
+
+    // Dispatch Mobile SMS Alert to RM
+    SMSService.sendRMAlertSMS({
+      recipientRmCode: existing.rmCode,
+      fileId: updated.fileId,
+      customerName: updated.customerName,
+      action: 'UPDATE',
+      performedByName: user.name || (user.role === 'Admin' ? 'System Administrator' : 'Senior Team Mentor'),
+      performedByRole: user.role,
+      details: changeSummary,
+    }).catch(e => console.error('SMS Alert dispatch failed:', e));
+  }
+
   SheetsSyncService.syncFile(updated).catch(e => console.error('Background Sheets Sync failed:', e));
 
   return res.json(updated);
@@ -370,6 +420,35 @@ router.delete('/:fileId', requireAuth, async (req: AuthenticatedRequest, res: Re
       rmCode: existing.rmCode,
       details: `Soft-deleted file ${fileId} (${existing.customerName})`,
     });
+  }
+
+  // Notify RM that their file was deleted/moved to trash
+  if (existing.rmCode) {
+    db.addNotification({
+      recipientRmCode: existing.rmCode,
+      fileId: existing.fileId,
+      customerName: existing.customerName,
+      action: 'DELETE',
+      performedBy: user.username,
+      performedByName: user.name || (user.role === 'Admin' ? 'System Administrator' : 'Senior Team Mentor'),
+      performedByRole: user.role as 'Admin' | 'Mentor',
+      title: `File ${existing.fileId} ${isPermanent ? 'permanently purged' : 'deleted'} by ${user.role}`,
+      message: `File ${existing.fileId} (${existing.customerName}, ${existing.productType}) was ${isPermanent ? 'permanently purged' : 'moved to trash'} by ${user.name} (${user.role}).`,
+      metadata: {
+        isPermanentDelete: isPermanent,
+      },
+    });
+
+    // Dispatch Mobile SMS Alert to RM
+    SMSService.sendRMAlertSMS({
+      recipientRmCode: existing.rmCode,
+      fileId: existing.fileId,
+      customerName: existing.customerName,
+      action: 'DELETE',
+      performedByName: user.name || (user.role === 'Admin' ? 'System Administrator' : 'Senior Team Mentor'),
+      performedByRole: user.role,
+      details: isPermanent ? 'File permanently purged from database' : 'File moved to trash',
+    }).catch(e => console.error('SMS Alert dispatch failed:', e));
   }
 
   SheetsSyncService.deleteFile(fileId).catch(e => console.error('Background Sheets delete sync failed:', e));
@@ -432,6 +511,8 @@ router.post('/:fileId/attachments', requireAuth, (req: AuthenticatedRequest, res
   };
 
   db.addAttachment(attachment);
+
+  SheetsSyncService.syncAttachment(attachment).catch(e => console.error('Attachment sheets sync error:', e));
 
   db.addAuditLog({
     userId: user.id,

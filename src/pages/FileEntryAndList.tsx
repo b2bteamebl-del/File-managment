@@ -1157,8 +1157,27 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
               <option value="Not Required">CPV: Not Required</option>
             </select>
 
+            {/* Pending Documents Filter */}
+            <select
+              value={filterPendingDoc}
+              onChange={e => setFilterPendingDoc(e.target.value)}
+              className={`px-2.5 py-1.5 border rounded-lg font-medium text-xs ${
+                filterPendingDoc !== 'all'
+                  ? 'bg-red-50 border-red-300 text-red-700 font-bold ring-1 ring-red-400'
+                  : 'bg-slate-50 border-slate-300 text-slate-700'
+              }`}
+            >
+              <option value="all">Pending Docs (All)</option>
+              <option value="has_pending">⚠️ Has Any Pending Docs</option>
+              {pendingDocOptions.map((doc: string) => (
+                <option key={doc} value={doc}>
+                  ⚠️ {doc}
+                </option>
+              ))}
+            </select>
+
             {/* Reset Filters Button */}
-            {(search || filterProduct !== 'all' || filterStatus !== 'all' || filterActive !== 'all' || filterCpv !== 'all' || filterRmCode !== 'all') && (
+            {(search || filterProduct !== 'all' || filterStatus !== 'all' || filterActive !== 'all' || filterCpv !== 'all' || filterPendingDoc !== 'all' || filterRmCode !== 'all') && (
               <button
                 onClick={() => {
                   setSearch('');
@@ -1166,6 +1185,7 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
                   setFilterStatus('all');
                   setFilterActive('all');
                   setFilterCpv('all');
+                  setFilterPendingDoc('all');
                   setFilterRmCode('all');
                 }}
                 className="px-2 py-1.5 text-slate-500 hover:text-slate-800 text-[11px] underline"

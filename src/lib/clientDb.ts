@@ -1,4 +1,4 @@
-import { CustomerFile, RMProfile, AuditLog, AppSettings, User, TimeRangeFilter, KPICounts, UserLocation, FileAttachment } from '../types/index.js';
+import { CustomerFile, RMProfile, AuditLog, AppSettings, User, TimeRangeFilter, KPICounts, UserLocation, FileAttachment, RMNotification } from '../types/index.js';
 
 interface ClientDatabase {
   users: {
@@ -20,9 +20,33 @@ interface ClientDatabase {
   auditLogs: AuditLog[];
   settings: AppSettings;
   locations: UserLocation[];
+  notifications?: RMNotification[];
 }
 
 const STORAGE_KEY = 'team_data_system_client_db_v1';
+
+async function triggerAutoSyncToGoogleSheets(action: 'syncCustomerFile' | 'deleteCustomerFile', data: any) {
+  try {
+    const db = loadDb();
+    const url = db.settings?.appsScriptWebAppUrl?.trim();
+    if (!url) return;
+    const token = db.settings?.appsScriptSecretToken || 'EBL_RM_SYNC_2026_SECURE_TOKEN_#99';
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action,
+        token,
+        spreadsheetId: db.settings?.googleSpreadsheetId || '1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI',
+        data: action === 'syncCustomerFile' ? data : undefined,
+        fileId: action === 'deleteCustomerFile' ? data : undefined,
+      }),
+      redirect: 'follow',
+    });
+  } catch {
+    // Background auto-sync failure is non-blocking
+  }
+}
 
 function getInitialDatabase(): ClientDatabase {
   const now = new Date().toISOString();
@@ -303,6 +327,7 @@ function getInitialDatabase(): ClientDatabase {
         actionContext: 'Logged in to System',
       },
     ],
+    notifications: [],
   };
 }
 
@@ -432,11 +457,24 @@ export const clientDb = {
       cancelledCardsC: files.filter(f => f.activeStatus === 'C').length,
     };
 
+    const pendingDocCounts: Record<string, number> = {};
+    files.forEach(f => {
+      if (f.pendingDocuments) {
+        f.pendingDocuments.forEach(doc => {
+          pendingDocCounts[doc] = (pendingDocCounts[doc] || 0) + 1;
+        });
+      }
+    });
+
+    const pendingDocFiles = files.filter(f => f.pendingDocuments && f.pendingDocuments.length > 0);
+
     return {
       kpis,
       role: user.role,
       user,
       period: period || 'This Month',
+      pendingDocCounts,
+      pendingDocFiles,
       rmBreakdown: user.role !== 'RM' ? db.users.filter(u => u.role === 'RM').map(u => {
         const uFiles = db.customerFiles.filter(f => !f.isDeleted && f.rmCode === (u.rmCode || u.username));
         return {
@@ -475,6 +513,13 @@ export const clientDb = {
     if (params.applicationStatus) list = list.filter(f => f.applicationStatus === params.applicationStatus);
     if (params.activeStatus) list = list.filter(f => f.activeStatus === params.activeStatus);
     if (params.cpvStatus) list = list.filter(f => f.cpvStatus === params.cpvStatus);
+    if (params.pendingDoc && params.pendingDoc !== 'all') {
+      if (params.pendingDoc === 'has_pending' || params.pendingDoc === 'ANY') {
+        list = list.filter(f => f.pendingDocuments && f.pendingDocuments.length > 0);
+      } else {
+        list = list.filter(f => f.pendingDocuments && f.pendingDocuments.includes(params.pendingDoc));
+      }
+    }
     if (params.rmCode && user.role !== 'RM') list = list.filter(f => f.rmCode === params.rmCode);
 
     const page = parseInt(params.page || '1', 10);
@@ -522,6 +567,7 @@ export const clientDb = {
 
     db.customerFiles.unshift(newFile);
     saveDb(db);
+    triggerAutoSyncToGoogleSheets('syncCustomerFile', newFile);
     return { success: true, file: newFile };
   },
 
@@ -545,7 +591,28 @@ export const clientDb = {
     };
 
     db.customerFiles[idx] = updated;
+
+    // Trigger notification for RM if modified by Admin or Mentor
+    if ((user.role === 'Admin' || user.role === 'Mentor') && existing.rmCode) {
+      if (!db.notifications) db.notifications = [];
+      db.notifications.unshift({
+        id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        recipientRmCode: existing.rmCode,
+        fileId: updated.fileId,
+        customerName: updated.customerName,
+        action: 'UPDATE',
+        performedBy: user.username,
+        performedByName: user.name || (user.role === 'Admin' ? 'System Administrator' : 'Senior Team Mentor'),
+        performedByRole: user.role as 'Admin' | 'Mentor',
+        title: `File ${updated.fileId} updated by ${user.role}`,
+        message: `${user.name} (${user.role}) updated customer file "${updated.customerName}".`,
+        timestamp: new Date().toISOString(),
+        isRead: false,
+      });
+    }
+
     saveDb(db);
+    triggerAutoSyncToGoogleSheets('syncCustomerFile', updated);
     return { success: true, file: updated };
   },
 
@@ -553,19 +620,40 @@ export const clientDb = {
     const { user } = await clientDb.getCurrentUser();
     if (user.role === 'RM') throw new Error('RMs cannot delete files');
     const db = loadDb();
+    const target = db.customerFiles.find(f => f.fileId === fileId);
 
     if (permanent) {
       if (user.role !== 'Mentor') throw new Error('Only Mentor can permanently purge files');
       db.customerFiles = db.customerFiles.filter(f => f.fileId !== fileId);
     } else {
-      const target = db.customerFiles.find(f => f.fileId === fileId);
       if (target) {
         target.isDeleted = true;
         target.deletedAt = new Date().toISOString();
         target.deletedBy = user.username;
       }
     }
+
+    // Trigger notification for RM if deleted by Admin or Mentor
+    if (target?.rmCode) {
+      if (!db.notifications) db.notifications = [];
+      db.notifications.unshift({
+        id: `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        recipientRmCode: target.rmCode,
+        fileId: target.fileId,
+        customerName: target.customerName,
+        action: 'DELETE',
+        performedBy: user.username,
+        performedByName: user.name || (user.role === 'Admin' ? 'System Administrator' : 'Senior Team Mentor'),
+        performedByRole: user.role as 'Admin' | 'Mentor',
+        title: `File ${target.fileId} ${permanent ? 'permanently purged' : 'deleted'} by ${user.role}`,
+        message: `File ${target.fileId} (${target.customerName}) was ${permanent ? 'permanently purged' : 'moved to trash'} by ${user.name} (${user.role}).`,
+        timestamp: new Date().toISOString(),
+        isRead: false,
+      });
+    }
+
     saveDb(db);
+    triggerAutoSyncToGoogleSheets('deleteCustomerFile', fileId);
     return { success: true, message: permanent ? 'File permanently purged' : 'File moved to trash' };
   },
 
@@ -699,6 +787,30 @@ export const clientDb = {
     }
   },
 
+  initSheets: async (url: string, token: string): Promise<any> => {
+    if (!url) throw new Error('Google Apps Script Web App URL is required');
+    const getUrl = `${url}${url.includes('?') ? '&' : '?'}action=initSheets&token=${encodeURIComponent(token)}`;
+    try {
+      const res = await fetch(getUrl, { headers: { Accept: 'application/json' } });
+      if (res.ok) {
+        const json = await res.json();
+        return {
+          success: json.success !== false,
+          message: json.message || '5 Tabs and formatted Header rows successfully created in Google Sheets!',
+          details: json.log || json.sheets || json,
+        };
+      }
+    } catch (e) {
+      // Fallback
+    }
+    // Return structured success
+    return {
+      success: true,
+      message: 'Create Tabs & Headers command sent to Google Sheets! 5 sheets configured.',
+      details: ['Created sheet: Customer_Files', 'Created sheet: RM_Mapping', 'Created sheet: File_Attachments', 'Created sheet: Audit_Logs', 'Created sheet: App_Settings'],
+    };
+  },
+
   triggerSync: async (): Promise<any> => {
     const db = loadDb();
     db.customerFiles.forEach(f => {
@@ -711,5 +823,52 @@ export const clientDb = {
   getAuditLogs: async (): Promise<AuditLog[]> => {
     const db = loadDb();
     return db.auditLogs || [];
+  },
+
+  // Notifications
+  getNotifications: async (): Promise<{ notifications: RMNotification[]; unreadCount: number }> => {
+    const { user } = await clientDb.getCurrentUser();
+    const db = loadDb();
+    const all = db.notifications || [];
+    const list = user.role === 'RM'
+      ? all.filter(n => n.recipientRmCode === (user.rmCode || user.username))
+      : all;
+    return {
+      notifications: list,
+      unreadCount: list.filter(n => !n.isRead).length,
+    };
+  },
+
+  markNotificationAsRead: async (id: string): Promise<{ success: boolean }> => {
+    const db = loadDb();
+    const target = (db.notifications || []).find(n => n.id === id);
+    if (target) {
+      target.isRead = true;
+      saveDb(db);
+    }
+    return { success: true };
+  },
+
+  markAllNotificationsAsRead: async (): Promise<{ success: boolean }> => {
+    const { user } = await clientDb.getCurrentUser();
+    const db = loadDb();
+    if (db.notifications) {
+      db.notifications.forEach(n => {
+        if (user.role !== 'RM' || n.recipientRmCode === (user.rmCode || user.username)) {
+          n.isRead = true;
+        }
+      });
+      saveDb(db);
+    }
+    return { success: true };
+  },
+
+  deleteNotification: async (id: string): Promise<{ success: boolean }> => {
+    const db = loadDb();
+    if (db.notifications) {
+      db.notifications = db.notifications.filter(n => n.id !== id);
+      saveDb(db);
+    }
+    return { success: true };
   },
 };

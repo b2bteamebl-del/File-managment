@@ -5,14 +5,16 @@ import {
   ExternalLink, 
   CheckCircle, 
   AlertCircle, 
-  Clock, 
-  Copy, 
   Check, 
   ShieldCheck, 
   Play, 
   Sliders, 
   Database,
-  ArrowRight
+  TableProperties,
+  FileSpreadsheet,
+  Users,
+  Paperclip,
+  Sparkles
 } from 'lucide-react';
 import { api } from '../lib/api.js';
 import { formatDhakaDateTime } from '../utils/dateTime.js';
@@ -25,12 +27,15 @@ export const SheetsSyncPage: React.FC = () => {
   const [testResult, setTestResult] = useState<any>(null);
   const [isTesting, setIsTesting] = useState(false);
 
+  // One-click creation states
+  const [isCreatingTabs, setIsCreatingTabs] = useState(false);
+  const [createTabsResult, setCreateTabsResult] = useState<any>(null);
+
   // Editable Web App URL and Sheet ID
   const [spreadsheetId, setSpreadsheetId] = useState('');
   const [webAppUrl, setWebAppUrl] = useState('');
   const [secretToken, setSecretToken] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [copiedCode, setCopiedCode] = useState(false);
 
   const fetchStatus = async () => {
     setIsLoading(true);
@@ -55,8 +60,8 @@ export const SheetsSyncPage: React.FC = () => {
     fetchStatus();
   }, []);
 
-  const handleSaveSettings = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveSettings = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     try {
       await api.updateSettings({
         googleSpreadsheetId: spreadsheetId.trim(),
@@ -84,6 +89,33 @@ export const SheetsSyncPage: React.FC = () => {
     }
   };
 
+  const handleCreateTabsAndHeaders = async () => {
+    if (!webAppUrl.trim()) {
+      alert('Please enter your Google Apps Script Web App URL first.');
+      return;
+    }
+    setIsCreatingTabs(true);
+    setCreateTabsResult(null);
+    try {
+      // Save settings first so the backend knows the target URL
+      await api.updateSettings({
+        googleSpreadsheetId: spreadsheetId.trim(),
+        appsScriptWebAppUrl: webAppUrl.trim(),
+        appsScriptSecretToken: secretToken.trim(),
+      });
+      const res = await api.initSheets(webAppUrl.trim(), secretToken.trim());
+      setCreateTabsResult(res);
+      fetchStatus();
+    } catch (err: any) {
+      setCreateTabsResult({
+        success: false,
+        message: err.message || 'Failed to create tabs and headers in Google Sheet',
+      });
+    } finally {
+      setIsCreatingTabs(false);
+    }
+  };
+
   const handleTriggerBatchSync = async () => {
     setIsSyncing(true);
     try {
@@ -97,9 +129,6 @@ export const SheetsSyncPage: React.FC = () => {
     }
   };
 
-  const appsScriptCodeSnippet = `// Google Apps Script for Spreadsheet 1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI
-// See /google-apps-script/Code.gs in the repository for the full tested production script!`;
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -110,21 +139,23 @@ export const SheetsSyncPage: React.FC = () => {
             <span>Google Sheets Synchronization Panel</span>
           </h1>
           <p className="text-xs text-slate-500 mt-1">
-            Authoritative Cloud Firestore / Server DB synchronization with Google Spreadsheet ID:{' '}
-            <strong className="font-mono text-slate-800">1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI</strong>
+            Authoritative Google Spreadsheet ID:{' '}
+            <strong className="font-mono text-slate-800">{spreadsheetId || '1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI'}</strong>
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <a
-            href="https://docs.google.com/spreadsheets/d/1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition border border-slate-200 flex items-center gap-1.5"
-          >
-            <span>Open Google Spreadsheet</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+          {spreadsheetId && (
+            <a
+              href={`https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition border border-slate-200 flex items-center gap-1.5"
+            >
+              <span>Open Google Sheet</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          )}
 
           <button
             onClick={fetchStatus}
@@ -134,6 +165,160 @@ export const SheetsSyncPage: React.FC = () => {
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
           </button>
+        </div>
+      </div>
+
+      {/* ONE-CLICK AUTO CREATE TABS & HEADERS SECTION */}
+      <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white p-6 rounded-2xl border border-blue-500/30 shadow-xl space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-[11px] font-bold mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+              <span>One-Click Sheet Setup / অ্যাপ থেকে স্বয়ংক্রিয় সেটআপ</span>
+            </div>
+            <h3 className="text-lg font-black text-white flex items-center gap-2">
+              <TableProperties className="w-5 h-5 text-emerald-400" />
+              <span>Create 5 New Tabs & Formatted Headers</span>
+            </h3>
+            <p className="text-xs text-slate-300 mt-1 max-w-2xl leading-relaxed">
+              Google Sheet-এ ম্যানুয়ালি কোনো ট্যাব বা কলাম তৈরি করার দরকার নেই! শুধুমাত্র নিচে Web App URL দিয়ে <strong>"Create Tabs & Headers Now"</strong> বাটনে ক্লিক করুন। সিস্টেম সাথে সাথে ৫টি নতুন ট্যাব তৈরি করে দিবে এবং নেভি ব্লু হেডারে সাজিয়ে নিবে।
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCreateTabsAndHeaders}
+            disabled={isCreatingTabs || !webAppUrl.trim()}
+            className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-40 text-white rounded-xl text-xs font-black transition shadow-lg shadow-emerald-500/25 flex items-center gap-2.5 whitespace-nowrap self-start sm:self-auto shrink-0 active:scale-98 cursor-pointer"
+          >
+            {isCreatingTabs ? (
+              <>
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <span>Creating Tabs & Headers...</span>
+              </>
+            ) : (
+              <>
+                <TableProperties className="w-4 h-4" />
+                <span>Create Tabs & Headers Now</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* 5 Tabs Preview */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2">
+          <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-xl border border-white/10">
+            <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-300 mb-1">
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Customer_Files</span>
+            </div>
+            <div className="text-[10px] text-slate-300">24 Columns (FILE_ID, Name, CPV, Status, etc.)</div>
+            <div className="mt-2 text-[9px] bg-slate-950/80 font-mono p-1 rounded text-emerald-300 truncate">
+              #0F294A Navy Blue Header
+            </div>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-xl border border-white/10">
+            <div className="flex items-center gap-1.5 font-bold text-xs text-blue-300 mb-1">
+              <Users className="w-3.5 h-3.5" />
+              <span>RM_Mapping</span>
+            </div>
+            <div className="text-[10px] text-slate-300">9 Columns (RM_CODE, Name, Mobile, Email, etc.)</div>
+            <div className="mt-2 text-[9px] bg-slate-950/80 font-mono p-1 rounded text-blue-300 truncate">
+              #0F294A Navy Blue Header
+            </div>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-xl border border-white/10">
+            <div className="flex items-center gap-1.5 font-bold text-xs text-purple-300 mb-1">
+              <Paperclip className="w-3.5 h-3.5" />
+              <span>File_Attachments</span>
+            </div>
+            <div className="text-[10px] text-slate-300">8 Columns (Status Pic, CPV Pic, Path, etc.)</div>
+            <div className="mt-2 text-[9px] bg-slate-950/80 font-mono p-1 rounded text-purple-300 truncate">
+              #0F294A Navy Blue Header
+            </div>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-xl border border-white/10">
+            <div className="flex items-center gap-1.5 font-bold text-xs text-amber-300 mb-1">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Audit_Logs</span>
+            </div>
+            <div className="text-[10px] text-slate-300">8 Columns (Action, User, Timestamp, etc.)</div>
+            <div className="mt-2 text-[9px] bg-slate-950/80 font-mono p-1 rounded text-amber-300 truncate">
+              #0F294A Navy Blue Header
+            </div>
+          </div>
+
+          <div className="bg-white/10 backdrop-blur-xs p-3.5 rounded-xl border border-white/10">
+            <div className="flex items-center gap-1.5 font-bold text-xs text-rose-300 mb-1">
+              <Sliders className="w-3.5 h-3.5" />
+              <span>App_Settings</span>
+            </div>
+            <div className="text-[10px] text-slate-300">4 Columns (Key, Value, Updated By, Time)</div>
+            <div className="mt-2 text-[9px] bg-slate-950/80 font-mono p-1 rounded text-rose-300 truncate">
+              #0F294A Navy Blue Header
+            </div>
+          </div>
+        </div>
+
+        {/* Creation Feedback Banner */}
+        {createTabsResult && (
+          <div className={`p-4 rounded-xl text-xs border ${
+            createTabsResult.success
+              ? 'bg-emerald-500/20 border-emerald-500 text-emerald-100'
+              : 'bg-red-500/20 border-red-500 text-red-100'
+          }`}>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2 font-bold">
+                {createTabsResult.success ? (
+                  <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+                )}
+                <span>{createTabsResult.message}</span>
+              </div>
+              {spreadsheetId && (
+                <a
+                  href={`https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-900 rounded-lg font-bold text-xs flex items-center gap-1.5 shrink-0 transition shadow-xs"
+                >
+                  <span>Open Sheet in Google ↗</span>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* REAL-TIME AUTO-SYNC ACTIVE BANNER */}
+      <div className="bg-emerald-50 border-2 border-emerald-300 rounded-2xl p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+            <RefreshCw className="w-5 h-5 animate-spin" style={{ animationDuration: '6s' }} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-sm text-emerald-950">
+                স্বয়ংক্রিয় রিয়েল-টাইম সিঙ্ক চালু আছে (Real-Time Auto-Sync Active)
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black uppercase">
+                100% Automated
+              </span>
+            </div>
+            <p className="text-xs text-emerald-800 mt-0.5 leading-relaxed font-medium">
+              অ্যাপ্লিকেশনে যে কোনো ডেটা <strong>এন্ট্রি (Create)</strong>, <strong>আপডেট (Update)</strong> বা <strong>ডিলিট (Delete)</strong> করার সাথে সাথেই তা স্বয়ংক্রিয়ভাবে Google Sheets-এ এন্ট্রি হয়ে যায়। ম্যানুয়ালি সিঙ্ক বাটন চাপার কোনো প্রয়োজন নেই।
+            </p>
+          </div>
+        </div>
+
+        <div className="text-right shrink-0">
+          <span className="text-[11px] font-mono text-emerald-700 bg-emerald-100/80 px-2.5 py-1 rounded-lg border border-emerald-200 inline-block font-semibold">
+            Background Queue: Active (30s)
+          </span>
         </div>
       </div>
 
@@ -181,7 +366,7 @@ export const SheetsSyncPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Manual Actions Banner */}
+      {/* Manual Sync Banner */}
       <div className="bg-slate-900 text-white p-5 rounded-xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h4 className="font-bold text-sm text-white flex items-center gap-2">
@@ -189,14 +374,14 @@ export const SheetsSyncPage: React.FC = () => {
             <span>Manual Full-Spectrum Synchronization</span>
           </h4>
           <p className="text-xs text-slate-300 mt-0.5">
-            Atomically upserts all customer records and RM mappings to Google Spreadsheet using FILE_ID and RM_CODE keys.
+            Atomically syncs all customer records, RM mappings, and attachments to the Google Sheet.
           </p>
         </div>
 
         <button
           onClick={handleTriggerBatchSync}
           disabled={isSyncing || !syncStatus?.appsScriptConfigured}
-          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition shadow-md flex items-center gap-2 whitespace-nowrap self-start sm:self-auto"
+          className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-700 disabled:opacity-50 text-white rounded-lg text-xs font-bold transition shadow-md flex items-center gap-2 whitespace-nowrap self-start sm:self-auto cursor-pointer"
         >
           {isSyncing ? (
             <>
@@ -219,7 +404,7 @@ export const SheetsSyncPage: React.FC = () => {
           <span>Google Apps Script Web App Configuration</span>
         </h3>
         <p className="text-xs text-slate-500">
-          The application writes securely to Google Sheets via your deployed Apps Script Web App. Passwords and credentials are never stored in the spreadsheet.
+          Paste the deployed Web App URL from Google Apps Script below to connect your sheet.
         </p>
 
         <form onSubmit={handleSaveSettings} className="space-y-4">
@@ -245,12 +430,9 @@ export const SheetsSyncPage: React.FC = () => {
               required
               value={spreadsheetId}
               onChange={e => setSpreadsheetId(e.target.value)}
-              placeholder="e.g. 1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI or paste full Google Sheet link"
+              placeholder="e.g. 1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI"
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono"
             />
-            <p className="text-[11px] text-slate-400 mt-1">
-              Enter any Google Spreadsheet ID or paste the complete URL. The system automatically extracts the ID and syncs customer records.
-            </p>
           </div>
 
           <div>
@@ -265,7 +447,7 @@ export const SheetsSyncPage: React.FC = () => {
               className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono"
             />
             <p className="text-[11px] text-slate-400 mt-1">
-              Deploy as Web App &gt; Execute as: "Me" &gt; Who has access: "Anyone".
+              Deployed as Web App &gt; Execute as: "Me" &gt; Access: "Anyone".
             </p>
           </div>
 
@@ -281,10 +463,10 @@ export const SheetsSyncPage: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex flex-wrap items-center gap-2 pt-2">
             <button
               type="submit"
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-xs"
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold transition shadow-xs cursor-pointer"
             >
               Save Configuration
             </button>
@@ -293,9 +475,19 @@ export const SheetsSyncPage: React.FC = () => {
               type="button"
               onClick={handleTestConnection}
               disabled={isTesting || !webAppUrl}
-              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition border border-slate-300 flex items-center gap-1.5"
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition border border-slate-300 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               {isTesting ? 'Testing Endpoint...' : 'Test Connection'}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCreateTabsAndHeaders}
+              disabled={isCreatingTabs || !webAppUrl}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            >
+              <TableProperties className="w-3.5 h-3.5" />
+              <span>{isCreatingTabs ? 'Setting up...' : 'Create Tabs & Headers'}</span>
             </button>
 
             {saveSuccess && (
@@ -327,59 +519,16 @@ export const SheetsSyncPage: React.FC = () => {
         )}
       </div>
 
-      {/* Step-by-Step Deployment Instructions */}
-      <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-4">
+      {/* Guide Card */}
+      <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 space-y-3 text-xs text-slate-700">
         <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
           <Database className="w-4 h-4 text-blue-600" />
-          <span>Step-by-Step Google Spreadsheet Setup Guide</span>
+          <span>Google Spreadsheet Auto-Setup Instructions</span>
         </h3>
-
-        <div className="space-y-3 text-xs text-slate-700 leading-relaxed">
-          <div className="flex items-start gap-2">
-            <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">1</span>
-            <div>
-              <strong>Open Target Google Sheet:</strong> Open{' '}
-              <a 
-                href="https://docs.google.com/spreadsheets/d/1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI" 
-                target="_blank" 
-                rel="noreferrer" 
-                className="text-blue-600 underline font-mono"
-              >
-                1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI
-              </a>.
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2">
-            <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">2</span>
-            <div>
-              <strong>Open Apps Script:</strong> Click <strong>Extensions &gt; Apps Script</strong>.
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2">
-            <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">3</span>
-            <div>
-              <strong>Paste Script:</strong> Copy the code from{' '}
-              <code className="bg-slate-200 px-1 py-0.5 rounded text-blue-800">/google-apps-script/Code.gs</code>{' '}
-              and paste it into the editor.
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2">
-            <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">4</span>
-            <div>
-              <strong>Run Initialization:</strong> Select <code className="bg-slate-200 px-1 py-0.5 rounded">initSpreadsheetStructure</code> and click <strong>Run</strong>. This will safely create or verify all 5 tabs (<code className="font-semibold text-slate-800">RM_Mapping</code>, <code className="font-semibold text-slate-800">Customer_Files</code>, <code className="font-semibold text-slate-800">File_Attachments</code>, <code className="font-semibold text-slate-800">Audit_Logs</code>, <code className="font-semibold text-slate-800">App_Settings</code>) with headers without touching any existing rows.
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2">
-            <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold flex items-center justify-center text-[10px] shrink-0 mt-0.5">5</span>
-            <div>
-              <strong>Deploy Web App:</strong> Click <strong>Deploy &gt; New deployment &gt; Web app</strong>. Execute as: <code className="font-semibold">Me</code>, Access: <code className="font-semibold">Anyone</code>. Copy the URL and paste it above!
-            </div>
-          </div>
-        </div>
+        <p>
+          ১. আপনি ইতিমধ্যে Apps Script ডিপ্লয় করে থাকলে, ওপরের বক্সে <strong>Web App URL</strong> পেস্ট করুন এবং <strong>Save Configuration</strong> দিন।<br />
+          ২. এরপর সরাসরি <strong>"Create Tabs & Headers Now"</strong> বাটনে ক্লিক করলেই গুগল শিটে ৫টি নতুন ট্যাব তৈরি হয়ে যাবে এবং সমস্ত কলাম নেভি ব্লু হেডার সহ স্বয়ংক্রিয়ভাবে সাজানো হয়ে যাবে!
+        </p>
       </div>
     </div>
   );

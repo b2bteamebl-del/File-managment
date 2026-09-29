@@ -12,7 +12,7 @@
       "status": "Active",
       "mustChangePassword": true,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-09-27T04:45:36.148Z"
+      "lastLogin": "2026-09-29T12:17:11.051Z"
     },
     {
       "id": "usr_mentor12345",
@@ -26,7 +26,7 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-09-29T06:10:03.639Z"
+      "lastLogin": "2026-09-29T12:16:17.879Z"
     },
     {
       "id": "usr_rm104393",
@@ -41,7 +41,7 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-09-29T06:22:25.135Z"
+      "lastLogin": "2026-09-29T12:12:11.469Z"
     },
     {
       "id": "usr_rm105210",
@@ -55,7 +55,8 @@
       "rmCode": "105210",
       "status": "Active",
       "mustChangePassword": false,
-      "createdAt": "2026-09-27T04:45:19.303Z"
+      "createdAt": "2026-09-27T04:45:19.303Z",
+      "lastLogin": "2026-09-29T11:58:31.163Z"
     },
     {
       "id": "usr_rm106880",
@@ -87,16 +88,16 @@
       "applicationStatus": "Approved",
       "activeStatus": "Y",
       "pendingDocuments": [],
-      "remarks": "Customer has verified income of BDT 185,000/mo. Clean CIB report.",
+      "remarks": "Approved by Head of Division.",
       "cpvStatus": "Completed",
       "cpvDate": "2026-09-20",
       "cpvAddress": "17 Dhanmondi R/A, Road 2, Dhaka-1205",
       "cpvRemarks": "Office verified in person. Customer is Senior GM.",
-      "cpvLastUpdatedBy": "104393",
+      "cpvLastUpdatedBy": "Admin0",
       "createdAt": "2026-09-18T10:30:00+06:00",
-      "updatedAt": "2026-09-22T14:15:00+06:00",
+      "updatedAt": "2026-09-29T12:17:11.072Z",
       "createdBy": "104393",
-      "updatedBy": "104393",
+      "updatedBy": "Admin0",
       "submittedAt": "2026-09-19T11:00:00+06:00",
       "approvedAt": "2026-09-22T14:15:00+06:00",
       "isDeleted": false,
@@ -112,21 +113,22 @@
       "rmCode": "104393",
       "rmName": "Tanvir Ahmed",
       "productType": "Corporate Card",
-      "applicationStatus": "Submitted",
+      "applicationStatus": "Query",
       "activeStatus": "N",
       "pendingDocuments": [
         "Salary Certificate",
         "BS (Bank Statement)"
       ],
-      "remarks": "Application submitted to operations. Waiting for original bank statement.",
+      "remarks": "Admin Note: Updated with urgent query.",
       "cpvStatus": "Pending",
       "createdAt": "2026-09-24T09:00:00+06:00",
-      "updatedAt": "2026-09-24T09:30:00+06:00",
+      "updatedAt": "2026-09-29T12:12:11.443Z",
       "createdBy": "104393",
-      "updatedBy": "104393",
+      "updatedBy": "Admin0",
       "submittedAt": "2026-09-24T09:30:00+06:00",
       "isDeleted": false,
-      "sheetsSyncStatus": "Pending"
+      "sheetsSyncStatus": "Pending",
+      "cpvLastUpdatedBy": "Admin0"
     },
     {
       "fileId": "EBL-2026-00103",
@@ -234,6 +236,123 @@
   "attachments": [],
   "auditLogs": [
     {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "UPDATE",
+      "fileId": "EBL-2026-00101",
+      "rmCode": "104393",
+      "details": "Updated file EBL-2026-00101. Status: Approved, Active: Y",
+      "id": "log_1790684231072_um2b0",
+      "timestamp": "2026-09-29T12:17:11.072Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1790684231052_23ysm",
+      "timestamp": "2026-09-29T12:17:11.052Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1790684177879_bps0e",
+      "timestamp": "2026-09-29T12:16:17.879Z"
+    },
+    {
+      "userId": "usr_rm104393",
+      "username": "104393",
+      "role": "RM",
+      "rmCode": "104393",
+      "action": "LOGIN",
+      "details": "User 104393 (RM) logged in successfully",
+      "id": "log_1790683931469_wp7jw",
+      "timestamp": "2026-09-29T12:12:11.469Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "UPDATE",
+      "fileId": "EBL-2026-00102",
+      "rmCode": "104393",
+      "details": "Updated file EBL-2026-00102. Status: Query, Active: N",
+      "id": "log_1790683931443_i057y",
+      "timestamp": "2026-09-29T12:12:11.443Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1790683931417_qd3cu",
+      "timestamp": "2026-09-29T12:12:11.417Z"
+    },
+    {
+      "userId": "usr_rm104393",
+      "username": "104393",
+      "role": "RM",
+      "rmCode": "104393",
+      "action": "LOGIN",
+      "details": "User 104393 (RM) logged in successfully",
+      "id": "log_1790683920916_z74rx",
+      "timestamp": "2026-09-29T12:12:00.916Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1790683920869_yt777",
+      "timestamp": "2026-09-29T12:12:00.870Z"
+    },
+    {
+      "userId": "usr_rm104393",
+      "username": "104393",
+      "role": "RM",
+      "rmCode": "104393",
+      "action": "LOGIN",
+      "details": "User 104393 (RM) logged in successfully",
+      "id": "log_1790683916335_ma24j",
+      "timestamp": "2026-09-29T12:11:56.335Z"
+    },
+    {
+      "userId": "usr_rm104393",
+      "username": "104393",
+      "role": "RM",
+      "rmCode": "104393",
+      "action": "LOGIN",
+      "details": "User 104393 (RM) logged in successfully",
+      "id": "log_1790683898190_1gbfl",
+      "timestamp": "2026-09-29T12:11:38.190Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1790683898143_l4o03",
+      "timestamp": "2026-09-29T12:11:38.143Z"
+    },
+    {
+      "userId": "usr_rm105210",
+      "username": "105210",
+      "role": "RM",
+      "rmCode": "105210",
+      "action": "LOGIN",
+      "details": "User 105210 (RM) logged in successfully",
+      "id": "log_1790683111164_zxg8k",
+      "timestamp": "2026-09-29T11:58:31.164Z"
+    },
+    {
       "userId": "usr_rm104393",
       "username": "104393",
       "role": "RM",
@@ -340,5 +459,56 @@
     "lastSyncStatus": "Idle",
     "updatedBy": "System",
     "updatedAt": "2026-09-27T04:45:19.303Z"
-  }
+  },
+  "notifications": [
+    {
+      "recipientRmCode": "104393",
+      "fileId": "EBL-2026-00101",
+      "customerName": "Shahidul Alam",
+      "action": "UPDATE",
+      "performedBy": "Admin0",
+      "performedByName": "EBL System Administrator",
+      "performedByRole": "Admin",
+      "title": "File EBL-2026-00101 updated by Admin",
+      "message": "EBL System Administrator (Admin) modified customer file \"Shahidul Alam\": Remarks: \"Approved by Head of Division.\"",
+      "metadata": {
+        "oldValue": "Approved",
+        "newValue": "Approved"
+      },
+      "id": "notif_1790684231073_0eayv",
+      "timestamp": "2026-09-29T12:17:11.073Z",
+      "isRead": false
+    },
+    {
+      "recipientRmCode": "104393",
+      "fileId": "EBL-2026-00102",
+      "customerName": "Farhana Akhter",
+      "action": "UPDATE",
+      "performedBy": "Admin0",
+      "performedByName": "EBL System Administrator",
+      "performedByRole": "Admin",
+      "title": "File EBL-2026-00102 updated by Admin",
+      "message": "EBL System Administrator (Admin) modified customer file \"Farhana Akhter\": Status changed from \"Submitted\" to \"Query\" • Remarks: \"Admin Note: Updated with urgent query.\"",
+      "metadata": {
+        "oldValue": "Submitted",
+        "newValue": "Query"
+      },
+      "id": "notif_1790683931443_ry7ie",
+      "timestamp": "2026-09-29T12:12:11.443Z",
+      "isRead": false
+    }
+  ],
+  "smsLogs": [
+    {
+      "recipientMobile": "+8801819234567",
+      "recipientRmCode": "104393",
+      "recipientName": "Tanvir Ahmed",
+      "fileId": "EBL-2026-00101",
+      "message": "[EBL ALERT] RM 104393: File EBL-2026-00101 (Shahidul Alam) updated by Admin (EBL System Administrator). Remarks: \"Approved by Head of Division.\"",
+      "status": "Delivered",
+      "gateway": "BANGLADESH_MOBILE_SMS",
+      "id": "sms_1790684231073_xyff3",
+      "timestamp": "2026-09-29T12:17:11.073Z"
+    }
+  ]
 }

@@ -138,8 +138,23 @@ export interface AppSettings {
   lastSyncAttempt?: string;
   lastSyncStatus?: 'Idle' | 'InProgress' | 'Success' | 'Error';
   lastSyncError?: string;
+  enableMobileSmsAlerts?: boolean;
+  smsGatewayUrl?: string;
+  smsSenderId?: string;
   updatedBy: string;
   updatedAt: string;
+}
+
+export interface SMSLog {
+  id: string;
+  recipientMobile: string;
+  recipientRmCode: string;
+  recipientName: string;
+  fileId?: string;
+  message: string;
+  status: 'Delivered' | 'Sent' | 'Failed';
+  gateway: string;
+  timestamp: string;
 }
 
 export interface KPICounts {
@@ -159,3 +174,25 @@ export interface KPICounts {
 }
 
 export type TimeRangeFilter = 'Today' | 'This Week' | 'Last Week' | 'This Month' | 'Last Month' | 'All Time' | 'Custom';
+
+export interface RMNotification {
+  id: string;
+  recipientRmCode: string; // RM code (e.g. "104393")
+  fileId: string;
+  customerName: string;
+  action: 'UPDATE' | 'DELETE' | 'RESTORE' | 'STATUS_CHANGE';
+  performedBy: string; // e.g. "Admin0" or "12345"
+  performedByName: string; // e.g. "System Administrator"
+  performedByRole: 'Admin' | 'Mentor';
+  title: string;
+  message: string;
+  timestamp: string; // ISO Asia/Dhaka
+  isRead: boolean;
+  metadata?: {
+    field?: string;
+    oldValue?: string;
+    newValue?: string;
+    isPermanentDelete?: boolean;
+  };
+}
+

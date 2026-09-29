@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { CustomerFile, FileAttachment, RMProfile, AuditLog, AppSettings, UserRole, UserLocation } from '../src/types/index.js';
+import { CustomerFile, FileAttachment, RMProfile, AuditLog, AppSettings, UserRole, UserLocation, RMNotification, SMSLog } from '../src/types/index.js';
 
 const DATA_DIR = path.resolve(process.cwd(), '.data');
 const DB_FILE = path.join(DATA_DIR, 'database.json');
@@ -42,6 +42,8 @@ export interface DatabaseSchema {
   auditLogs: AuditLog[];
   settings: AppSettings;
   userLocations?: UserLocation[];
+  notifications?: RMNotification[];
+  smsLogs?: SMSLog[];
 }
 
 // Password hashing helper
@@ -581,6 +583,100 @@ class DatabaseManager {
 
   public getAuditLogs(): AuditLog[] {
     return this.data.auditLogs;
+  }
+
+  // Notifications for RMs
+  public addNotification(entry: Omit<RMNotification, 'id' | 'timestamp' | 'isRead'>): RMNotification {
+    if (!this.data.notifications) {
+      this.data.notifications = [];
+    }
+    const notif: RMNotification = {
+      ...entry,
+      id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      timestamp: new Date().toISOString(),
+      isRead: false,
+    };
+    this.data.notifications.unshift(notif);
+    // Keep last 300 notifications
+    if (this.data.notifications.length > 300) {
+      this.data.notifications.pop();
+    }
+    this.saveDatabase();
+    return notif;
+  }
+
+  public getNotificationsForUser(rmCodeOrRole: string, isElevated: boolean = false): RMNotification[] {
+    if (!this.data.notifications) return [];
+    if (isElevated) {
+      return this.data.notifications;
+    }
+    return this.data.notifications.filter(n => n.recipientRmCode === rmCodeOrRole);
+  }
+
+  public markNotificationAsRead(id: string): boolean {
+    if (!this.data.notifications) return false;
+    const target = this.data.notifications.find(n => n.id === id);
+    if (target) {
+      target.isRead = true;
+      this.saveDatabase();
+      return true;
+    }
+    return false;
+  }
+
+  public markAllNotificationsAsRead(rmCodeOrRole: string, isElevated: boolean = false): boolean {
+    if (!this.data.notifications) return false;
+    let changed = false;
+    for (const n of this.data.notifications) {
+      if (isElevated || n.recipientRmCode === rmCodeOrRole) {
+        if (!n.isRead) {
+          n.isRead = true;
+          changed = true;
+        }
+      }
+    }
+    if (changed) {
+      this.saveDatabase();
+    }
+    return true;
+  }
+
+  public deleteNotification(id: string): boolean {
+    if (!this.data.notifications) return false;
+    const initialLen = this.data.notifications.length;
+    this.data.notifications = this.data.notifications.filter(n => n.id !== id);
+    if (this.data.notifications.length !== initialLen) {
+      this.saveDatabase();
+      return true;
+    }
+    return false;
+  }
+
+  // Mobile SMS Dispatch Logging
+  public addSmsLog(entry: Omit<SMSLog, 'id' | 'timestamp'>): SMSLog {
+    if (!this.data.smsLogs) {
+      this.data.smsLogs = [];
+    }
+    const log: SMSLog = {
+      ...entry,
+      id: `sms_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      timestamp: new Date().toISOString(),
+    };
+    this.data.smsLogs.unshift(log);
+    // Keep last 300 logs
+    if (this.data.smsLogs.length > 300) {
+      this.data.smsLogs.pop();
+    }
+    this.saveDatabase();
+    return log;
+  }
+
+  public getSmsLogs(rmCode?: string): SMSLog[] {
+    if (!this.data.smsLogs) return [];
+    if (rmCode && rmCode !== 'all') {
+      return this.data.smsLogs.filter(s => s.recipientRmCode === rmCode);
+    }
+    return this.data.smsLogs;
   }
 }
 

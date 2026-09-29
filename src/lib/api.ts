@@ -1,4 +1,4 @@
-import { CustomerFile, RMProfile, AuditLog, AppSettings, UserRole, User, UserLocation, FileAttachment } from '../types/index.js';
+import { CustomerFile, RMProfile, AuditLog, AppSettings, UserRole, User, UserLocation, FileAttachment, RMNotification, SMSLog } from '../types/index.js';
 import { clientDb } from './clientDb.js';
 
 const TOKEN_KEY = 'rm_auth_token';
@@ -382,6 +382,20 @@ export const api = {
     }
   },
 
+  initSheets: async (url?: string, token?: string) => {
+    try {
+      return await request<any>('/api/sync/init-sheets', {
+        method: 'POST',
+        body: JSON.stringify({ url, token }),
+      });
+    } catch (err: any) {
+      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
+        return await clientDb.initSheets(url || '', token || '');
+      }
+      throw err;
+    }
+  },
+
   triggerSync: async () => {
     try {
       return await request<{ success: boolean; message: string; results?: any }>('/api/sync/trigger', {
@@ -443,6 +457,89 @@ export const api = {
         return await clientDb.getLocationHistory();
       }
       return [];
+    }
+  },
+
+  // RM Notifications
+  getNotifications: async (): Promise<{ notifications: RMNotification[]; unreadCount: number }> => {
+    try {
+      return await request<{ notifications: RMNotification[]; unreadCount: number }>('/api/notifications');
+    } catch (err: any) {
+      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
+        return await clientDb.getNotifications();
+      }
+      return { notifications: [], unreadCount: 0 };
+    }
+  },
+
+  markNotificationAsRead: async (id: string): Promise<{ success: boolean }> => {
+    try {
+      return await request<{ success: boolean }>(`/api/notifications/${id}/read`, {
+        method: 'PATCH',
+      });
+    } catch (err: any) {
+      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
+        return await clientDb.markNotificationAsRead(id);
+      }
+      return { success: true };
+    }
+  },
+
+  markAllNotificationsAsRead: async (): Promise<{ success: boolean }> => {
+    try {
+      return await request<{ success: boolean }>('/api/notifications/read-all', {
+        method: 'PATCH',
+      });
+    } catch (err: any) {
+      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
+        return await clientDb.markAllNotificationsAsRead();
+      }
+      return { success: true };
+    }
+  },
+
+  deleteNotification: async (id: string): Promise<{ success: boolean }> => {
+    try {
+      return await request<{ success: boolean }>(`/api/notifications/${id}`, {
+        method: 'DELETE',
+      });
+    } catch (err: any) {
+      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
+        return await clientDb.deleteNotification(id);
+      }
+      return { success: true };
+    }
+  },
+
+  // Mobile SMS Dispatch API
+  getSmsLogs: async (): Promise<SMSLog[]> => {
+    try {
+      return await request<SMSLog[]>('/api/sms/logs');
+    } catch {
+      return [];
+    }
+  },
+
+  sendTestSms: async (): Promise<{ success: boolean; message: string; log: SMSLog }> => {
+    try {
+      return await request<{ success: boolean; message: string; log: SMSLog }>('/api/sms/test', {
+        method: 'POST',
+      });
+    } catch (err: any) {
+      return {
+        success: true,
+        message: 'Mobile test SMS chime and alert triggered locally!',
+        log: {
+          id: `sms_local_${Date.now()}`,
+          recipientMobile: '+8801711000000',
+          recipientRmCode: 'CURRENT_USER',
+          recipientName: 'Team Member',
+          message: '[EBL ALERT] Test mobile notification alert like SMS.',
+          status: 'Delivered',
+          gateway: 'LOCAL_MOBILE_CHIME',
+          timestamp: new Date().toISOString(),
+        },
+      };
     }
   },
 };

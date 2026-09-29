@@ -1,0 +1,251 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "Authenticated bank user profile with role, RM code, and access state",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Auth UID"
+        },
+        "username": {
+          "type": "string",
+          "description": "RM Code or Admin username"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["RM", "Admin", "Mentor"],
+          "description": "Assigned security role"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name"
+        },
+        "rmCode": {
+          "type": "string",
+          "description": "Unique assigned RM Code"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Active", "Inactive", "Suspended"],
+          "description": "Account status"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["userId", "username", "role", "name", "status", "createdAt"]
+    },
+    "customerFile": {
+      "title": "CustomerFile",
+      "description": "EBL banking customer card and loan application file record",
+      "type": "object",
+      "properties": {
+        "fileId": {
+          "type": "string",
+          "description": "Unique file identifier (e.g. EBL-2026-00101)",
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "customerName": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "companyName": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "officeAddress": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "mobile": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "rmCode": {
+          "type": "string",
+          "maxLength": 30
+        },
+        "productType": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "applicationStatus": {
+          "type": "string",
+          "enum": [
+            "Collected",
+            "Submitted",
+            "Declined",
+            "Return to Source",
+            "Approved",
+            "Query",
+            "Condition",
+            "STC"
+          ]
+        },
+        "activeStatus": {
+          "type": "string",
+          "enum": ["Y", "N", "C"]
+        },
+        "pendingDocuments": {
+          "type": "array"
+        },
+        "remarks": {
+          "type": "string",
+          "maxLength": 2000
+        },
+        "cpvStatus": {
+          "type": "string",
+          "enum": ["Pending", "Completed", "Failed", "Not Required"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "createdBy": {
+          "type": "string"
+        },
+        "updatedBy": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fileId",
+        "customerName",
+        "companyName",
+        "officeAddress",
+        "mobile",
+        "rmCode",
+        "productType",
+        "applicationStatus",
+        "activeStatus",
+        "cpvStatus",
+        "createdAt",
+        "updatedAt",
+        "createdBy",
+        "updatedBy"
+      ]
+    },
+    "fileAttachment": {
+      "title": "FileAttachment",
+      "description": "Secure customer document or CPV photo attachment metadata",
+      "type": "object",
+      "properties": {
+        "attachmentId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fileId": {
+          "type": "string"
+        },
+        "category": {
+          "type": "string"
+        },
+        "fileName": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "fileType": {
+          "type": "string",
+          "maxLength": 100
+        },
+        "storagePath": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "uploadedBy": {
+          "type": "string"
+        },
+        "uploadedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["attachmentId", "fileId", "category", "fileName", "fileType", "storagePath", "uploadedBy", "uploadedAt"]
+    },
+    "auditLog": {
+      "title": "AuditLog",
+      "description": "Immutable operational audit trail event",
+      "type": "object",
+      "properties": {
+        "logId": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "action": {
+          "type": "string"
+        },
+        "fileId": {
+          "type": "string"
+        },
+        "rmCode": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "details": {
+          "type": "string",
+          "maxLength": 2000
+        }
+      },
+      "required": ["logId", "userId", "role", "action", "timestamp", "details"]
+    },
+    "appSetting": {
+      "title": "AppSetting",
+      "description": "Application settings and dropdown options",
+      "type": "object",
+      "properties": {
+        "settingKey": {
+          "type": "string"
+        },
+        "settingValue": {
+          "type": "string"
+        },
+        "updatedBy": {
+          "type": "string"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["settingKey", "settingValue", "updatedBy", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "Bank user profile and authorization mapping"
+    },
+    "/customerFiles/{fileId}": {
+      "schema": "customerFile",
+      "description": "Primary repository of EBL customer credit card and loan files"
+    },
+    "/customerFiles/{fileId}/attachments/{attachmentId}": {
+      "schema": "fileAttachment",
+      "description": "Metadata for encrypted documents and CPV photos linked to a customer file"
+    },
+    "/auditLogs/{logId}": {
+      "schema": "auditLog",
+      "description": "Immutable audit logs of all actions"
+    },
+    "/appSettings/{settingKey}": {
+      "schema": "appSetting",
+      "description": "System dropdowns and synchronization configuration"
+    }
+  }
+}

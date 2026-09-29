@@ -1,0 +1,6 @@
+{
+  "name": "RM File Management & Team Member Data System",
+  "description": "Production-oriented file management, RM performance analytics, and Google Sheets synchronization platform for team members.",
+  "requestFramePermissions": ["GEOLOCATION"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

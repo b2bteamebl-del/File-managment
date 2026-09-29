@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isRole(role) {
+      return isSignedIn() && getUserData().role == role;
+    }
+
+    function isAdmin() {
+      return isRole('Admin') || isRole('Mentor');
+    }
+
+    function isMentor() {
+      return isRole('Mentor');
+    }
+
+    function getAuthRmCode() {
+      return getUserData().rmCode;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+      // Only Admin / Mentor can create or modify user profiles
+      allow create, update: if isAdmin();
+      allow delete: if isMentor();
+    }
+
+    // Customer Files collection
+    match /customerFiles/{fileId} {
+      // RM can only get/list their own files; Admin & Mentor can access all
+      allow get: if isSignedIn() && (isAdmin() || existing().rmCode == getAuthRmCode());
+      allow list: if isSignedIn() && (isAdmin() || resource.data.rmCode == getAuthRmCode());
+
+      // Create: RM can create with their own rmCode. Admin/Mentor can create for any rmCode.
+      allow create: if isSignedIn() && isValidId(fileId) && (
+        (isRole('RM') && incoming().rmCode == getAuthRmCode()) ||
+        isAdmin()
+      ) && incoming().fileId == fileId;
+
+      // Update: RM can update their own file preserving rmCode and createdAt. Admin/Mentor can update any file.
+      allow update: if isSignedIn() && isValidId(fileId) && (
+        (isRole('RM') && existing().rmCode == getAuthRmCode() && incoming().rmCode == existing().rmCode && incoming().createdAt == existing().createdAt) ||
+        isAdmin()
+      );
+
+      // Delete: RM cannot delete files. Admin can soft-delete. Mentor can hard delete.
+      allow delete: if isMentor();
+
+      // Attachments sub-collection
+      match /attachments/{attachmentId} {
+        allow get: if isSignedIn() && (
+          isAdmin() ||
+          get(/databases/$(database)/documents/customerFiles/$(fileId)).data.rmCode == getAuthRmCode()
+        );
+        allow list: if isSignedIn() && (
+          isAdmin() ||
+          get(/databases/$(database)/documents/customerFiles/$(fileId)).data.rmCode == getAuthRmCode()
+        );
+        allow create, update: if isSignedIn() && isValidId(attachmentId) && (
+          isAdmin() ||
+          get(/databases/$(database)/documents/customerFiles/$(fileId)).data.rmCode == getAuthRmCode()
+        );
+        allow delete: if isAdmin();
+      }
+    }
+
+    // Audit logs: append-only for authenticated actions; readable only by Admin and Mentor
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if false; // Audit logs are immutable
+    }
+
+    // App settings: readable by all signed in users, editable only by Admin and Mentor
+    match /appSettings/{settingKey} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+  }
+}

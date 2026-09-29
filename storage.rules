@@ -1,0 +1,39 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAllowedFileType() {
+      return request.resource.contentType.matches('image/(jpeg|jpg|png|webp)') ||
+             request.resource.contentType.matches('application/pdf');
+    }
+
+    function isAllowedFileSize() {
+      return request.resource.size <= 10 * 1024 * 1024; // 10MB limit
+    }
+
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+
+    // Protected customer file attachments: /files/{rmCode}/{fileId}/{fileName}
+    match /files/{rmCode}/{fileId}/{fileName} {
+      // RM can only access their own files; Admin / Mentor can access any
+      allow read: if isSignedIn() && (
+        request.auth.token.role in ['Admin', 'Mentor'] ||
+        request.auth.token.rmCode == rmCode
+      );
+
+      allow write: if isSignedIn() &&
+        (request.auth.token.role in ['Admin', 'Mentor'] || request.auth.token.rmCode == rmCode) &&
+        isAllowedFileType() &&
+        isAllowedFileSize();
+
+      allow delete: if isSignedIn() && request.auth.token.role in ['Admin', 'Mentor'];
+    }
+  }
+}

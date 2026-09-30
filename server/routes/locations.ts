@@ -34,14 +34,14 @@ router.post('/ping', (req: AuthenticatedRequest, res: Response) => {
   return res.json({ success: true, location: recorded });
 });
 
-// Mentor & Admin: Get latest known location of each active team member
-router.get('/latest', requireRoles(['Mentor', 'Admin']), (req: AuthenticatedRequest, res: Response) => {
+// ONLY Mentor: Get latest known location of each active team member (Admin cannot see location)
+router.get('/latest', requireRoles(['Mentor']), (req: AuthenticatedRequest, res: Response) => {
   const latestLocations = db.getLatestUserLocations();
   return res.json(latestLocations);
 });
 
-// Mentor & Admin: Get all recent location events
-router.get('/history', requireRoles(['Mentor', 'Admin']), (req: AuthenticatedRequest, res: Response) => {
+// ONLY Mentor: Get all recent location events (Admin cannot see location)
+router.get('/history', requireRoles(['Mentor']), (req: AuthenticatedRequest, res: Response) => {
   const allLocations = db.getAllUserLocations();
   return res.json(allLocations);
 });

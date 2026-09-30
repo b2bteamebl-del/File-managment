@@ -46,35 +46,47 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4 relative overflow-hidden">
-      {/* Background Accent */}
-      <div className="absolute inset-0 bg-[radial-gradient(#1e3a8a_1px,transparent_1px)] [background-size:24px_24px] opacity-20 pointer-events-none" />
-      
-      {/* Top Bar with Clock */}
-      <div className="w-full max-w-md mb-4 flex justify-between items-center px-1 text-slate-400 text-xs">
-        <div className="flex items-center gap-1.5 font-medium text-slate-300">
-          <Building2 className="w-4 h-4 text-blue-400" />
-          <span className="truncate max-w-[220px]">{teamName}</span>
-        </div>
-        <DhakaClock showReportingBadge={false} />
+    <div className="min-h-screen relative flex flex-col justify-center items-center p-4 overflow-hidden bg-slate-950 font-sans selection:bg-blue-600 selection:text-white">
+      {/* Background: Bangladeshi Banking Executive & Corporate Team Photo */}
+      <div className="absolute inset-0 z-0">
+        <img
+          src="/src/assets/images/bangladeshi_banking_team_1790785927702.jpg"
+          alt="Bangladeshi Banking Executive & Corporate Banking Team"
+          className="w-full h-full object-cover object-center filter brightness-[0.42] contrast-[1.08] scale-105 transform motion-safe:animate-fade-in"
+          referrerPolicy="no-referrer"
+        />
+        {/* Soft Corporate Gradient Overlays for optimal readability */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/75 to-blue-950/80 backdrop-blur-[2px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/20 via-slate-950/50 to-slate-950/90" />
       </div>
 
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-800">
+      {/* Top Bar with Team Branding & Dhaka Clock */}
+      <div className="relative z-10 w-full max-w-md mb-4 flex justify-between items-center px-1 text-slate-300 text-xs">
+        <div className="flex items-center gap-2 font-medium bg-slate-900/80 px-3 py-1.5 rounded-xl border border-white/10 backdrop-blur-md shadow-lg">
+          <Building2 className="w-4 h-4 text-blue-400 shrink-0" />
+          <span className="truncate max-w-[200px] text-white font-semibold">{teamName}</span>
+        </div>
+        <div className="bg-slate-900/80 px-3 py-1 rounded-xl border border-white/10 backdrop-blur-md shadow-lg">
+          <DhakaClock showReportingBadge={false} />
+        </div>
+      </div>
+
+      <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden border border-white/20 transition-all">
         {/* Header */}
-        <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 p-8 text-center text-white relative">
-          <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
+        <div className="bg-gradient-to-br from-[#0F294A] via-[#163a69] to-[#0A192F] p-7 text-center text-white relative">
+          <div className="w-14 h-14 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-blue-500/30 border border-white/20">
             <Users className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-white mb-1">
+          <h1 className="text-xl font-black tracking-tight text-white mb-1 drop-shadow-sm">
             {systemName}
           </h1>
-          <p className="text-xs text-blue-200/80 font-medium">
+          <p className="text-xs text-blue-200/90 font-medium">
             {teamName}
           </p>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-8 space-y-5">
+        <form onSubmit={handleSubmit} className="p-7 space-y-4">
           {error && (
             <div className="p-3.5 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3 text-red-700 text-xs animate-shake">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-red-500" />

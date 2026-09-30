@@ -69,8 +69,10 @@ function MainApp() {
         return <DatabaseManagement />;
 
       case 'locations':
-        if (user.role === 'RM') {
-          return <RMDashboard onNavigateToFiles={() => setCurrentTab('files')} />;
+        if (user.role !== 'Mentor') {
+          return user.role === 'RM' 
+            ? <RMDashboard onNavigateToFiles={() => setCurrentTab('files')} />
+            : <AdminDashboard onSelectRMForDrilldown={handleDrilldownRM} />;
         }
         return <LocationMonitorPage />;
 

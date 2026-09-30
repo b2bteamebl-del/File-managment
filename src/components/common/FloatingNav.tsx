@@ -63,6 +63,8 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({ currentTab, onSelectTa
         icon: Database,
         color: 'bg-violet-600',
       },
+    ] : []),
+    ...(role === 'Mentor' ? [
       {
         id: 'locations',
         label: 'Location Monitor',

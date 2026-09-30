@@ -57,6 +57,7 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
   // Form fields
   const [formData, setFormData] = useState<{
     fileId: string;
+    ccNumber: string;
     customerName: string;
     companyName: string;
     officeAddress: string;
@@ -69,12 +70,16 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
     activeStatus: ActiveStatus;
     pendingDocuments: string[];
     remarks: string;
+    locationAddress?: string;
+    locationLat?: number;
+    locationLng?: number;
     cpvStatus: CPVStatus;
     cpvDate: string;
     cpvAddress: string;
     cpvRemarks: string;
   }>({
     fileId: '',
+    ccNumber: '',
     customerName: '',
     companyName: '',
     officeAddress: '',
@@ -87,6 +92,9 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
     activeStatus: 'N',
     pendingDocuments: [] as string[],
     remarks: '',
+    locationAddress: '',
+    locationLat: undefined,
+    locationLng: undefined,
     // CPV
     cpvStatus: 'Pending',
     cpvDate: '',
@@ -181,6 +189,7 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
     setEditingFileId(null);
     setFormData({
       fileId: '',
+      ccNumber: '',
       customerName: '',
       companyName: '',
       officeAddress: '',
@@ -193,6 +202,9 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
       activeStatus: 'N',
       pendingDocuments: [],
       remarks: '',
+      locationAddress: '',
+      locationLat: undefined,
+      locationLng: undefined,
       cpvStatus: 'Pending',
       cpvDate: '',
       cpvAddress: '',
@@ -204,14 +216,17 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
     setFormSuccess(null);
     setIsFormOpen(true);
 
-    // Auto-detect current address from Google/GPS and auto-fill
+    // Auto-detect current address and GPS location from Google/GPS
     setIsDetectingOfficeAddress(true);
     identifyCurrentLocationAndPing('New File Auto Address Identification')
       .then(res => {
-        if (res && res.address) {
+        if (res && res.latitude && res.longitude) {
           setFormData(prev => ({
             ...prev,
-            officeAddress: prev.officeAddress || res.address,
+            officeAddress: prev.officeAddress || res.address || '',
+            locationAddress: res.address || '',
+            locationLat: res.latitude,
+            locationLng: res.longitude,
           }));
         }
       })
@@ -229,6 +244,7 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
     setEditingFileId(file.fileId);
     setFormData({
       fileId: file.fileId,
+      ccNumber: file.ccNumber || '',
       customerName: file.customerName || '',
       companyName: file.companyName || '',
       officeAddress: file.officeAddress || '',
@@ -241,6 +257,9 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
       activeStatus: file.activeStatus || 'N',
       pendingDocuments: file.pendingDocuments || [],
       remarks: file.remarks || '',
+      locationAddress: file.locationAddress || '',
+      locationLat: file.locationLat,
+      locationLng: file.locationLng,
       cpvStatus: file.cpvStatus || 'Pending',
       cpvDate: file.cpvDate || '',
       cpvAddress: file.cpvAddress || '',
@@ -566,6 +585,33 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
                     className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    CC-number (Credit Card No.)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.ccNumber}
+                    onChange={e => setFormData({ ...formData, ccNumber: e.target.value })}
+                    placeholder="e.g. 4501-XXXX-XXXX-1234"
+                    className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono font-medium"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-0.5">Card / Account identification number</p>
+                </div>
+
+                {/* GPS Location Auto-Captured: Silent for RM & Admin; Visible ONLY to Mentor */}
+                {user?.role === 'Mentor' && formData.locationAddress && (
+                  <div className="sm:col-span-2 md:col-span-3 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>Entry Location Detected (Mentor View): <strong>{formData.locationAddress}</strong></span>
+                    </span>
+                    <span className="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-300">
+                      GPS Tagged
+                    </span>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -1204,6 +1250,7 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
             <thead className="bg-[#0F294A] text-white uppercase text-[10px] tracking-wider font-semibold">
               <tr>
                 <th className="py-3 px-3">File ID</th>
+                <th className="py-3 px-2">CC-number</th>
                 <th className="py-3 px-3">Customer Name</th>
                 <th className="py-3 px-3">Mobile</th>
                 <th className="py-3 px-3">Company / Office</th>
@@ -1211,6 +1258,7 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
                 <th className="py-3 px-2">Status</th>
                 <th className="py-3 px-2 text-center">Active</th>
                 {user?.role !== 'RM' && <th className="py-3 px-2">RM Code</th>}
+                {user?.role === 'Mentor' && <th className="py-3 px-2">Entry Location</th>}
                 <th className="py-3 px-2">CPV</th>
                 <th className="py-3 px-3">Created</th>
                 <th className="py-3 px-3 text-right">Actions</th>
@@ -1219,7 +1267,7 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
             <tbody className="divide-y divide-slate-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={user?.role !== 'RM' ? 11 : 10} className="py-12 text-center text-slate-400">
+                  <td colSpan={12 + (user?.role !== 'RM' ? 1 : 0) + (user?.role === 'Mentor' ? 1 : 0)} className="py-12 text-center text-slate-400">
                     <div className="inline-flex items-center gap-2">
                       <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
                       <span>Loading authorized customer files...</span>
@@ -1228,7 +1276,7 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
                 </tr>
               ) : files.length === 0 ? (
                 <tr>
-                  <td colSpan={user?.role !== 'RM' ? 11 : 10} className="py-12 text-center text-slate-400">
+                  <td colSpan={12 + (user?.role !== 'RM' ? 1 : 0) + (user?.role === 'Mentor' ? 1 : 0)} className="py-12 text-center text-slate-400">
                     No customer files found matching the criteria.
                   </td>
                 </tr>
@@ -1237,6 +1285,15 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
                   <tr key={file.fileId} className="hover:bg-blue-50/50 transition">
                     <td className="py-3 px-3 font-mono font-bold text-blue-700 whitespace-nowrap">
                       {file.fileId}
+                    </td>
+                    <td className="py-3 px-2 font-mono whitespace-nowrap">
+                      {file.ccNumber ? (
+                        <span className="px-1.5 py-0.5 rounded bg-slate-100 font-mono text-[11px] font-bold text-slate-800">
+                          {file.ccNumber}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400 text-xs">—</span>
+                      )}
                     </td>
                     <td className="py-3 px-3 font-semibold text-slate-900 whitespace-nowrap">
                       {file.customerName}
@@ -1275,6 +1332,23 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
                     {user?.role !== 'RM' && (
                       <td className="py-3 px-2 font-mono text-blue-800 font-semibold whitespace-nowrap">
                         {file.rmCode}
+                      </td>
+                    )}
+                    {user?.role === 'Mentor' && (
+                      <td className="py-3 px-2 whitespace-nowrap">
+                        {file.locationAddress ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-medium border border-emerald-200" title={file.locationAddress}>
+                            <MapPin className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <span className="truncate max-w-[120px]">{file.locationAddress}</span>
+                          </span>
+                        ) : file.locationLat ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-blue-50 text-blue-800 text-[10px] font-mono border border-blue-200">
+                            <MapPin className="w-3 h-3 text-blue-600 shrink-0" />
+                            <span>{file.locationLat.toFixed(3)}, {file.locationLng?.toFixed(3)}</span>
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-[10px]">—</span>
+                        )}
                       </td>
                     )}
                     <td className="py-3 px-2 whitespace-nowrap">
@@ -1390,6 +1464,10 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
                   <p className="font-bold text-slate-800">{viewDetailsFile.activeStatus}</p>
                 </div>
                 <div>
+                  <span className="text-slate-500 font-semibold">CC-number:</span>
+                  <p className="font-mono font-bold text-slate-800">{viewDetailsFile.ccNumber || '—'}</p>
+                </div>
+                <div>
                   <span className="text-slate-500 font-semibold">Mobile:</span>
                   <p className="font-mono font-medium">{viewDetailsFile.mobile}</p>
                 </div>
@@ -1401,6 +1479,24 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
                   <span className="text-slate-500 font-semibold">Company & Address:</span>
                   <p className="font-medium">{viewDetailsFile.companyName} • {viewDetailsFile.officeAddress}</p>
                 </div>
+
+                {/* Entry Location: Visible ONLY to Mentor */}
+                {user?.role === 'Mentor' && (
+                  <div className="col-span-2 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900">
+                    <span className="font-bold flex items-center gap-1.5 mb-1 text-emerald-800 text-xs">
+                      <MapPin className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>RM Entry Location (Mentor Access Only):</span>
+                    </span>
+                    <p className="text-xs">
+                      Address: <strong>{viewDetailsFile.locationAddress || 'No reverse address'}</strong>
+                    </p>
+                    {viewDetailsFile.locationLat && (
+                      <p className="font-mono text-[11px] text-emerald-700 mt-0.5">
+                        Coordinates: {viewDetailsFile.locationLat.toFixed(5)}, {viewDetailsFile.locationLng?.toFixed(5)} ({viewDetailsFile.locationCapturedAt ? formatDhakaDateTime(viewDetailsFile.locationCapturedAt) : 'Captured at entry'})
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Pending Docs */}

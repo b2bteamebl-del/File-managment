@@ -154,6 +154,7 @@ router.get('/export', (req: AuthenticatedRequest, res: Response) => {
   const rows = files.map(f => {
     const base: Record<string, any> = {
       'File ID': f.fileId,
+      'CC-number': f.ccNumber || '',
       'Customer Name': f.customerName,
       'Company Name': f.companyName,
       'Mobile Number': f.mobile,
@@ -168,6 +169,10 @@ router.get('/export', (req: AuthenticatedRequest, res: Response) => {
     if (user.role !== 'RM') {
       base['RM Code'] = f.rmCode;
       base['RM Name'] = f.rmName || '';
+    }
+
+    if (user.role === 'Mentor') {
+      base['Entry Location'] = f.locationAddress || (f.locationLat ? `${f.locationLat}, ${f.locationLng}` : '');
     }
 
     base['Pending Documents'] = (f.pendingDocuments || []).join('; ');

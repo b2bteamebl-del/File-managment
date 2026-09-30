@@ -409,6 +409,14 @@ export const api = {
     }
   },
 
+  getScriptCode: async () => {
+    try {
+      return await request<{ code: string }>('/api/sync/script-code');
+    } catch {
+      return { code: '' };
+    }
+  },
+
   // Audit Logs
   getAuditLogs: async (params: Record<string, string> = {}): Promise<AuditLog[]> => {
     try {

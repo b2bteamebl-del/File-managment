@@ -51,6 +51,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab, isOpe
         label: role === 'Mentor' ? 'Master Database (Superuser)' : 'Master Database',
         icon: Database,
       },
+    ] : []),
+    // Team Location Monitor: ONLY Mentor can access (Admin cannot see location)
+    ...(role === 'Mentor' ? [
       {
         id: 'locations',
         label: 'Team Location Monitor',

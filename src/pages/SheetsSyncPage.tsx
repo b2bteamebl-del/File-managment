@@ -14,7 +14,8 @@ import {
   FileSpreadsheet,
   Users,
   Paperclip,
-  Sparkles
+  Sparkles,
+  ScrollText
 } from 'lucide-react';
 import { api } from '../lib/api.js';
 import { formatDhakaDateTime } from '../utils/dateTime.js';
@@ -30,6 +31,7 @@ export const SheetsSyncPage: React.FC = () => {
   // One-click creation states
   const [isCreatingTabs, setIsCreatingTabs] = useState(false);
   const [createTabsResult, setCreateTabsResult] = useState<any>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   // Editable Web App URL and Sheet ID
   const [spreadsheetId, setSpreadsheetId] = useState('');
@@ -47,7 +49,7 @@ export const SheetsSyncPage: React.FC = () => {
       setSyncStatus(statusRes);
       setSettings(settingsRes);
       setSpreadsheetId(settingsRes.googleSpreadsheetId || '1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI');
-      setWebAppUrl(settingsRes.appsScriptWebAppUrl || '');
+      setWebAppUrl(settingsRes.appsScriptWebAppUrl || 'https://script.google.com/macros/s/AKfycby3wqRoiAtJx9ujAln9n8mFkmFTN1K0ncgQGpYeDMsx4OPcBaCbK78sHhnvvqqs6aue/exec');
       setSecretToken(settingsRes.appsScriptSecretToken || 'RM_TEAM_SYNC_2026_SECURE_TOKEN_#99');
     } catch (e) {
       console.error(e);
@@ -62,12 +64,17 @@ export const SheetsSyncPage: React.FC = () => {
 
   const handleSaveSettings = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    const cleanId = spreadsheetId.includes('/d/') 
+      ? (spreadsheetId.match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1] || spreadsheetId.trim())
+      : spreadsheetId.trim();
+
     try {
       await api.updateSettings({
-        googleSpreadsheetId: spreadsheetId.trim(),
+        googleSpreadsheetId: cleanId,
         appsScriptWebAppUrl: webAppUrl.trim(),
         appsScriptSecretToken: secretToken.trim(),
       });
+      setSpreadsheetId(cleanId);
       setSaveSuccess(true);
       fetchStatus();
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -129,6 +136,21 @@ export const SheetsSyncPage: React.FC = () => {
     }
   };
 
+  const handleCopyScriptCode = async () => {
+    try {
+      const res = await api.getScriptCode();
+      if (res && res.code) {
+        await navigator.clipboard.writeText(res.code);
+        setCopiedCode(true);
+        setTimeout(() => setCopiedCode(false), 4000);
+      } else {
+        alert('Could not load Code.gs');
+      }
+    } catch {
+      alert('Failed to copy Code.gs');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -185,24 +207,40 @@ export const SheetsSyncPage: React.FC = () => {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handleCreateTabsAndHeaders}
-            disabled={isCreatingTabs || !webAppUrl.trim()}
-            className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-40 text-white rounded-xl text-xs font-black transition shadow-lg shadow-emerald-500/25 flex items-center gap-2.5 whitespace-nowrap self-start sm:self-auto shrink-0 active:scale-98 cursor-pointer"
-          >
-            {isCreatingTabs ? (
-              <>
-                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>Creating Tabs & Headers...</span>
-              </>
-            ) : (
-              <>
-                <TableProperties className="w-4 h-4" />
-                <span>Create Tabs & Headers Now</span>
-              </>
-            )}
-          </button>
+          <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+            <button
+              type="button"
+              onClick={handleCopyScriptCode}
+              className={`px-4 py-3.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap active:scale-98 cursor-pointer ${
+                copiedCode 
+                  ? 'bg-emerald-600 text-white' 
+                  : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+              }`}
+              title="Click to copy full Code.gs script to clipboard"
+            >
+              {copiedCode ? <Check className="w-4 h-4 text-emerald-300" /> : <ScrollText className="w-4 h-4 text-emerald-400" />}
+              <span>{copiedCode ? 'Code.gs Copied! (কপি হয়েছে)' : 'Copy Code.gs (কোড কপি)'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCreateTabsAndHeaders}
+              disabled={isCreatingTabs || !webAppUrl.trim()}
+              className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-40 text-white rounded-xl text-xs font-black transition shadow-lg shadow-emerald-500/25 flex items-center gap-2.5 whitespace-nowrap active:scale-98 cursor-pointer"
+            >
+              {isCreatingTabs ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Creating Tabs & Headers...</span>
+                </>
+              ) : (
+                <>
+                  <TableProperties className="w-4 h-4" />
+                  <span>Create Tabs & Headers Now</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* 5 Tabs Preview */}
@@ -212,7 +250,7 @@ export const SheetsSyncPage: React.FC = () => {
               <FileSpreadsheet className="w-3.5 h-3.5" />
               <span>Customer_Files</span>
             </div>
-            <div className="text-[10px] text-slate-300">24 Columns (FILE_ID, Name, CPV, Status, etc.)</div>
+            <div className="text-[10px] text-slate-300">26 Columns (FILE_ID, CC_NUMBER, Location, CPV, etc.)</div>
             <div className="mt-2 text-[9px] bg-slate-950/80 font-mono p-1 rounded text-emerald-300 truncate">
               #0F294A Navy Blue Header
             </div>

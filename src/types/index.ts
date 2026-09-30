@@ -52,10 +52,17 @@ export interface CustomerFile {
   rmCode: string; // Read-only for RM, assigned RM Code
   rmName?: string;
   productType: string; // e.g. "Credit Card", "B2B", "Corporate Card", "Split", "Limit Enhancement"
+  ccNumber?: string; // CC-number (Credit Card Number / Account Number)
   applicationStatus: ApplicationStatus;
   activeStatus: ActiveStatus;
   pendingDocuments: string[]; // e.g. ["NID", "Salary Certificate"]
   remarks?: string;
+
+  // Location tracking at entry (visible ONLY to Mentor)
+  locationAddress?: string;
+  locationLat?: number;
+  locationLng?: number;
+  locationCapturedAt?: string;
 
   // CPV fields
   cpvStatus: CPVStatus;

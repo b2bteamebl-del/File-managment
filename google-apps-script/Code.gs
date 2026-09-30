@@ -37,7 +37,7 @@ var SHEETS = {
 
 var HEADERS = {
   RM_MAPPING: ["RM_CODE", "RM_NAME", "MOBILE", "EMAIL", "OFFICE_ADDRESS", "ACCOUNT_STATUS", "CREATED_AT", "LAST_LOGIN", "AUTH_UID"],
-  CUSTOMER_FILES: ["FILE_ID", "CUSTOMER_NAME", "COMPANY_NAME", "OFFICE_ADDRESS", "MOBILE", "ALT_MOBILE", "EMAIL", "PRODUCT_TYPE", "APPLICATION_STATUS", "ACTIVE_STATUS", "RM_CODE", "PENDING_DOCUMENTS", "REMARKS", "CPV_STATUS", "CPV_DATE", "CPV_ADDRESS", "CPV_REMARKS", "CREATED_AT", "UPDATED_AT", "CREATED_BY", "UPDATED_BY", "SUBMITTED_AT", "APPROVED_AT", "DELETED"],
+  CUSTOMER_FILES: ["FILE_ID", "CC_NUMBER", "CUSTOMER_NAME", "COMPANY_NAME", "OFFICE_ADDRESS", "MOBILE", "ALT_MOBILE", "EMAIL", "PRODUCT_TYPE", "APPLICATION_STATUS", "ACTIVE_STATUS", "RM_CODE", "PENDING_DOCUMENTS", "REMARKS", "LOCATION_ADDRESS", "CPV_STATUS", "CPV_DATE", "CPV_ADDRESS", "CPV_REMARKS", "CREATED_AT", "UPDATED_AT", "CREATED_BY", "UPDATED_BY", "SUBMITTED_AT", "APPROVED_AT", "DELETED"],
   FILE_ATTACHMENTS: ["ATTACHMENT_ID", "FILE_ID", "CATEGORY", "FILE_NAME", "FILE_TYPE", "FILE_SIZE", "UPLOADED_BY", "UPLOADED_AT"],
   AUDIT_LOGS: ["LOG_ID", "USER_ID", "ROLE", "ACTION", "FILE_ID", "RM_CODE", "TIMESTAMP", "DETAILS"],
   APP_SETTINGS: ["SETTING_KEY", "SETTING_VALUE", "UPDATED_BY", "UPDATED_AT"]
@@ -258,6 +258,7 @@ function upsertCustomerFile(ss, f) {
   var pendingDocs = Array.isArray(f.pendingDocuments) ? f.pendingDocuments.join(", ") : (f.pendingDocuments || "");
   var rowData = [
     f.fileId || "",
+    f.ccNumber || "",
     f.customerName || "",
     f.companyName || "",
     f.officeAddress || "",
@@ -270,6 +271,7 @@ function upsertCustomerFile(ss, f) {
     f.rmCode || "",
     pendingDocs,
     f.remarks || "",
+    f.locationAddress || "",
     f.cpvStatus || "",
     f.cpvDate || "",
     f.cpvAddress || "",
@@ -310,8 +312,8 @@ function markFileDeleted(ss, fileId) {
     for (var i = 0; i < fileIds.length; i++) {
       if (String(fileIds[i][0]).trim() === String(fileId).trim()) {
         var rowIndex = i + 2;
-        sheet.getRange(rowIndex, 24).setValue("Y"); // DELETED column (24th col)
-        sheet.getRange(rowIndex, 19).setValue(new Date().toISOString()); // UPDATED_AT
+        sheet.getRange(rowIndex, 26).setValue("Y"); // DELETED column (26th col)
+        sheet.getRange(rowIndex, 21).setValue(new Date().toISOString()); // UPDATED_AT
         return { success: true, action: "marked_deleted", rowIndex: rowIndex, fileId: fileId };
       }
     }

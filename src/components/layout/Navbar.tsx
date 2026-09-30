@@ -117,8 +117,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
 
           {/* Right: Google Sheets status, Location Link, User Profile, Logout */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Location Monitor quick icon (For Mentor / Admin) */}
-            {user?.role !== 'RM' && onNavigate && (
+            {/* Location Monitor quick icon (Visible ONLY to Mentor - Admin and RM cannot see location) */}
+            {user?.role === 'Mentor' && onNavigate && (
               <button
                 onClick={() => onNavigate('locations')}
                 className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-rose-950/60 hover:bg-rose-900/80 text-rose-200 border border-rose-800/50 rounded-lg text-xs transition"
@@ -197,19 +197,21 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
                     <span>Change Password</span>
                   </button>
 
+                  {user?.role === 'Mentor' && onNavigate && (
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        onNavigate('locations');
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                    >
+                      <MapPin className="w-4 h-4 text-rose-600" />
+                      <span>Location Monitor</span>
+                    </button>
+                  )}
+
                   {user?.role !== 'RM' && onNavigate && (
                     <>
-                      <button
-                        onClick={() => {
-                          setShowProfileMenu(false);
-                          onNavigate('locations');
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700"
-                      >
-                        <MapPin className="w-4 h-4 text-rose-600" />
-                        <span>Location Monitor</span>
-                      </button>
-
                       <button
                         onClick={() => {
                           setShowProfileMenu(false);

@@ -91,6 +91,7 @@ router.get('/', requireAuth, (req: AuthenticatedRequest, res: Response) => {
     files = files.filter(f => {
       return (
         f.customerName?.toLowerCase().includes(q) ||
+        f.ccNumber?.toLowerCase().includes(q) ||
         f.mobile?.toLowerCase().includes(q) ||
         f.companyName?.toLowerCase().includes(q) ||
         f.fileId?.toLowerCase().includes(q) ||
@@ -114,10 +115,12 @@ router.get('/', requireAuth, (req: AuthenticatedRequest, res: Response) => {
     return 0;
   });
 
-  // Attachments count
+  // Attachments and location privacy:
+  // Admin and RM cannot see location tracking; ONLY Mentor can see entry location.
+  const isMentor = user.role === 'Mentor';
   const enriched = files.map(f => {
     const atts = db.getAttachmentsByFileId(f.fileId);
-    return {
+    const item: any = {
       ...f,
       attachments: atts.map(a => ({
         id: a.id,
@@ -130,6 +133,13 @@ router.get('/', requireAuth, (req: AuthenticatedRequest, res: Response) => {
         uploadedAt: a.uploadedAt,
       })),
     };
+    if (!isMentor) {
+      delete item.locationLat;
+      delete item.locationLng;
+      delete item.locationAddress;
+      delete item.locationCapturedAt;
+    }
+    return item as CustomerFile;
   });
 
   const pageNum = Math.max(1, parseInt(page, 10) || 1);
@@ -163,7 +173,7 @@ router.get('/:fileId', requireAuth, (req: AuthenticatedRequest, res: Response) =
   }
 
   const atts = db.getAttachmentsByFileId(file.fileId);
-  return res.json({
+  const result: any = {
     ...file,
     attachments: atts.map(a => ({
       id: a.id,
@@ -175,7 +185,15 @@ router.get('/:fileId', requireAuth, (req: AuthenticatedRequest, res: Response) =
       uploadedBy: a.uploadedBy,
       uploadedAt: a.uploadedAt,
     })),
-  });
+  };
+  // Admin and RM cannot see location tracking; ONLY Mentor can see entry location
+  if (user.role !== 'Mentor') {
+    delete result.locationLat;
+    delete result.locationLng;
+    delete result.locationAddress;
+    delete result.locationCapturedAt;
+  }
+  return res.json(result);
 });
 
 // Create Customer File
@@ -201,8 +219,12 @@ router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) =
   const now = new Date().toISOString();
   const fileId = body.fileId || generateFileId();
 
+  const lat = typeof body.locationLat === 'number' ? body.locationLat : (body.locationLat ? parseFloat(body.locationLat) : undefined);
+  const lng = typeof body.locationLng === 'number' ? body.locationLng : (body.locationLng ? parseFloat(body.locationLng) : undefined);
+
   const newFile: CustomerFile = {
     fileId,
+    ccNumber: body.ccNumber ? String(body.ccNumber).trim() : undefined,
     customerName: String(body.customerName).trim(),
     companyName: String(body.companyName).trim(),
     officeAddress: String(body.officeAddress).trim(),
@@ -216,6 +238,12 @@ router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) =
     activeStatus: body.activeStatus || 'N',
     pendingDocuments: Array.isArray(body.pendingDocuments) ? body.pendingDocuments : [],
     remarks: body.remarks || '',
+
+    // Entry location tracking (stored in database, visible ONLY to Mentor)
+    locationAddress: body.locationAddress ? String(body.locationAddress).trim() : undefined,
+    locationLat: lat,
+    locationLng: lng,
+    locationCapturedAt: (lat || body.locationAddress) ? now : undefined,
 
     // CPV
     cpvStatus: body.cpvStatus || 'Pending',
@@ -235,6 +263,21 @@ router.post('/', requireAuth, async (req: AuthenticatedRequest, res: Response) =
   };
 
   const created = db.createCustomerFile(newFile);
+
+  if (lat && lng) {
+    db.recordUserLocation({
+      userId: user.id,
+      username: user.username,
+      rmCode: assignedRmCode,
+      name: user.name,
+      role: user.role,
+      latitude: lat,
+      longitude: lng,
+      address: newFile.locationAddress || 'Field Entry Location',
+      timestamp: now,
+      actionContext: `Created file ${newFile.fileId} (${newFile.customerName})`,
+    });
+  }
 
   db.addAuditLog({
     userId: user.id,
@@ -285,6 +328,7 @@ router.put('/:fileId', requireAuth, async (req: AuthenticatedRequest, res: Respo
 
   const updates: Partial<CustomerFile> = {
     customerName: body.customerName !== undefined ? String(body.customerName).trim() : existing.customerName,
+    ccNumber: body.ccNumber !== undefined ? String(body.ccNumber).trim() : existing.ccNumber,
     companyName: body.companyName !== undefined ? String(body.companyName).trim() : existing.companyName,
     officeAddress: body.officeAddress !== undefined ? String(body.officeAddress).trim() : existing.officeAddress,
     mobile: body.mobile !== undefined ? String(body.mobile).trim() : existing.mobile,
@@ -356,8 +400,8 @@ router.put('/:fileId', requireAuth, async (req: AuthenticatedRequest, res: Respo
       performedBy: user.username,
       performedByName: user.name || (user.role === 'Admin' ? 'System Administrator' : 'Senior Team Mentor'),
       performedByRole: user.role as 'Admin' | 'Mentor',
-      title: `File ${updated.fileId} updated by ${user.role}`,
-      message: `${user.name} (${user.role}) modified customer file "${updated.customerName}": ${changeSummary}`,
+      title: `TAT ID: ${updated.fileId} • File Changed`,
+      message: `File: "${updated.customerName}" | Change: ${changeSummary}`,
       metadata: {
         oldValue: existing.applicationStatus,
         newValue: updated.applicationStatus,
@@ -372,13 +416,20 @@ router.put('/:fileId', requireAuth, async (req: AuthenticatedRequest, res: Respo
       action: 'UPDATE',
       performedByName: user.name || (user.role === 'Admin' ? 'System Administrator' : 'Senior Team Mentor'),
       performedByRole: user.role,
-      details: changeSummary,
+      details: `TAT ID: ${updated.fileId} | File: ${updated.customerName} | Changed: ${changeSummary}`,
     }).catch(e => console.error('SMS Alert dispatch failed:', e));
   }
 
   SheetsSyncService.syncFile(updated).catch(e => console.error('Background Sheets Sync failed:', e));
 
-  return res.json(updated);
+  const resUpdated: any = { ...updated };
+  if (user.role !== 'Mentor') {
+    delete resUpdated.locationLat;
+    delete resUpdated.locationLng;
+    delete resUpdated.locationAddress;
+    delete resUpdated.locationCapturedAt;
+  }
+  return res.json(resUpdated);
 });
 
 // Delete Customer File
@@ -432,8 +483,8 @@ router.delete('/:fileId', requireAuth, async (req: AuthenticatedRequest, res: Re
       performedBy: user.username,
       performedByName: user.name || (user.role === 'Admin' ? 'System Administrator' : 'Senior Team Mentor'),
       performedByRole: user.role as 'Admin' | 'Mentor',
-      title: `File ${existing.fileId} ${isPermanent ? 'permanently purged' : 'deleted'} by ${user.role}`,
-      message: `File ${existing.fileId} (${existing.customerName}, ${existing.productType}) was ${isPermanent ? 'permanently purged' : 'moved to trash'} by ${user.name} (${user.role}).`,
+      title: `TAT ID: ${existing.fileId} • File Deleted`,
+      message: `File: "${existing.customerName}" | Change: File removed from portfolio by ${user.role} (${user.name})`,
       metadata: {
         isPermanentDelete: isPermanent,
       },
@@ -447,7 +498,7 @@ router.delete('/:fileId', requireAuth, async (req: AuthenticatedRequest, res: Re
       action: 'DELETE',
       performedByName: user.name || (user.role === 'Admin' ? 'System Administrator' : 'Senior Team Mentor'),
       performedByRole: user.role,
-      details: isPermanent ? 'File permanently purged from database' : 'File moved to trash',
+      details: `TAT ID: ${existing.fileId} | File: ${existing.customerName} | Action: File Deleted from Portfolio`,
     }).catch(e => console.error('SMS Alert dispatch failed:', e));
   }
 

@@ -12,13 +12,13 @@
       "status": "Active",
       "mustChangePassword": true,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-09-29T12:17:11.051Z"
+      "lastLogin": "2026-09-30T16:37:31.889Z"
     },
     {
       "id": "usr_mentor12345",
       "username": "12345",
-      "passwordHash": "b3c9a95b0f5c16f7e470d679505b84eec7587742adbc0b7b68a33c12edfa14b73587d512895cbdbe6d58fa0fa2dd991a2e591cd27d4d2efe06d293943aafca4b",
-      "salt": "101d211e03d1d5165e10d2fbc0bffe54",
+      "passwordHash": "75935d508aa5bc8ac8c81da0e8faf0782d4a476f5a964ca77ab1cf81f80a158187b05f1956dea80b38297bdbfef8d0defdb350ac2aedeab589fafb1350cbce26",
+      "salt": "2014ac1f83bc47382a8e791972a4a35f",
       "role": "Mentor",
       "name": "EBL Senior Business Mentor",
       "email": "mentor12345@ebl.com.bd",
@@ -26,7 +26,7 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-09-29T12:16:17.879Z"
+      "lastLogin": "2026-09-30T16:38:11.395Z"
     },
     {
       "id": "usr_rm104393",
@@ -41,7 +41,7 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-09-29T12:12:11.469Z"
+      "lastLogin": "2026-09-30T16:36:38.805Z"
     },
     {
       "id": "usr_rm105210",
@@ -235,6 +235,61 @@
   ],
   "attachments": [],
   "auditLogs": [
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1790786291395_8wxdd",
+      "timestamp": "2026-09-30T16:38:11.395Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1790786251890_emmy1",
+      "timestamp": "2026-09-30T16:37:31.890Z"
+    },
+    {
+      "userId": "usr_rm104393",
+      "username": "104393",
+      "role": "RM",
+      "rmCode": "104393",
+      "action": "LOGIN",
+      "details": "User 104393 (RM) logged in successfully",
+      "id": "log_1790786198806_v6wkv",
+      "timestamp": "2026-09-30T16:36:38.806Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "UPDATE",
+      "details": "Updated application settings and dropdown configurations",
+      "id": "log_1790786174272_zjj5c",
+      "timestamp": "2026-09-30T16:36:14.272Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1790786097707_9z7r0",
+      "timestamp": "2026-09-30T16:34:57.707Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1790784658969_mflzz",
+      "timestamp": "2026-09-30T16:10:58.969Z"
+    },
     {
       "userId": "usr_admin0",
       "username": "Admin0",
@@ -457,8 +512,10 @@
     "appsScriptSecretToken": "EBL_RM_SYNC_2026_SECURE_TOKEN_#99",
     "syncIntervalMinutes": 5,
     "lastSyncStatus": "Idle",
-    "updatedBy": "System",
-    "updatedAt": "2026-09-27T04:45:19.303Z"
+    "updatedBy": "12345",
+    "updatedAt": "2026-09-30T16:36:14.272Z",
+    "appName": "B2B team",
+    "teamName": "Team Member Data Management System"
   },
   "notifications": [
     {
@@ -477,7 +534,7 @@
       },
       "id": "notif_1790684231073_0eayv",
       "timestamp": "2026-09-29T12:17:11.073Z",
-      "isRead": false
+      "isRead": true
     },
     {
       "recipientRmCode": "104393",
@@ -495,7 +552,7 @@
       },
       "id": "notif_1790683931443_ry7ie",
       "timestamp": "2026-09-29T12:12:11.443Z",
-      "isRead": false
+      "isRead": true
     }
   ],
   "smsLogs": [

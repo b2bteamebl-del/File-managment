@@ -22,10 +22,11 @@ export const MobileSMSBanner: React.FC<{ onNavigateToFiles?: (fileId?: string) =
   const [lastSeenId, setLastSeenId] = useState<string>('');
 
   useEffect(() => {
+    const hasDecided = localStorage.getItem('ebl_notification_prompt_decided');
     if ('Notification' in window) {
       setPermissionStatus(Notification.permission);
-      if (Notification.permission === 'default') {
-        // Show friendly prompt after 3 seconds on mobile
+      if (Notification.permission === 'default' && !hasDecided) {
+        // Show friendly prompt only once after 3 seconds
         const timer = setTimeout(() => setShowPermissionPrompt(true), 3000);
         return () => clearTimeout(timer);
       }
@@ -103,6 +104,7 @@ export const MobileSMSBanner: React.FC<{ onNavigateToFiles?: (fileId?: string) =
   }, [currentSms]);
 
   const handleGrantPermission = async () => {
+    localStorage.setItem('ebl_notification_prompt_decided', 'true');
     const perm = await requestNotificationPermission();
     setPermissionStatus(perm);
     setShowPermissionPrompt(false);
@@ -110,6 +112,11 @@ export const MobileSMSBanner: React.FC<{ onNavigateToFiles?: (fileId?: string) =
       playMobileSmsChime();
       triggerMobileVibration();
     }
+  };
+
+  const handleDismissPrompt = () => {
+    localStorage.setItem('ebl_notification_prompt_decided', 'true');
+    setShowPermissionPrompt(false);
   };
 
   const handleBannerClick = () => {
@@ -206,7 +213,7 @@ export const MobileSMSBanner: React.FC<{ onNavigateToFiles?: (fileId?: string) =
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowPermissionPrompt(false)}
+                  onClick={handleDismissPrompt}
                   className="px-2.5 py-1.5 bg-white/10 hover:bg-white/20 text-slate-300 text-xs rounded-lg transition cursor-pointer"
                 >
                   Not Now
@@ -214,7 +221,7 @@ export const MobileSMSBanner: React.FC<{ onNavigateToFiles?: (fileId?: string) =
               </div>
             </div>
             <button
-              onClick={() => setShowPermissionPrompt(false)}
+              onClick={handleDismissPrompt}
               className="text-slate-400 hover:text-white p-1"
             >
               <X className="w-3.5 h-3.5" />

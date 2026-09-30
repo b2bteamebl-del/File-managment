@@ -347,7 +347,7 @@ function createInitialDatabase(): DatabaseSchema {
     ],
     reportingWeekStart: 'Saturday',
     googleSpreadsheetId: '1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI',
-    appsScriptWebAppUrl: '',
+    appsScriptWebAppUrl: 'https://script.google.com/macros/s/AKfycby3wqRoiAtJx9ujAln9n8mFkmFTN1K0ncgQGpYeDMsx4OPcBaCbK78sHhnvvqqs6aue/exec',
     appsScriptSecretToken: 'RM_TEAM_SYNC_2026_SECURE_TOKEN_#99',
     syncIntervalMinutes: 5,
     lastSyncStatus: 'Idle',

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="emblemGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F294A" />
+      <stop offset="50%" stop-color="#1B497E" />
+      <stop offset="100%" stop-color="#088365" />
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCD34D" />
+      <stop offset="100%" stop-color="#F59E0B" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-opacity="0.3" />
+    </filter>
+  </defs>
+
+  <!-- Rounded App Tile -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#emblemGrad)" filter="url(#shadow)" stroke="#38BDF8" stroke-width="1.5" stroke-opacity="0.4"/>
+
+  <!-- Banking Emblem / Shield -->
+  <path d="M32 10 L48 18 V32 C48 42 32 52 32 52 C32 52 16 42 16 32 V18 Z" fill="#0F294A" stroke="url(#goldGrad)" stroke-width="2.5" stroke-linejoin="round" />
+
+  <!-- Banking Pillars -->
+  <path d="M22 24 H42 M24 24 V38 M29.3 24 V38 M34.7 24 V38 M40 24 V38 M21 38 H43" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" />
+  
+  <!-- Pediment / Roof -->
+  <polygon points="32,16 20,23 44,23" fill="url(#goldGrad)" />
+  
+  <!-- Subtle Sparkle -->
+  <circle cx="46" cy="14" r="2.5" fill="#34D399" />
+</svg>

@@ -77,12 +77,17 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ username, password }),
       });
+      clientDbMode = false;
+      setStoredToken(res.token);
+      localStorage.setItem('client_session_user', JSON.stringify(res.user));
+      localStorage.setItem('user', JSON.stringify(res.user));
       return res;
     } catch (err: any) {
       if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
         console.info('[Auth] Server API unavailable. Operating in resilient client database mode.');
         const fallbackRes = await clientDb.login(username, password);
         localStorage.setItem('client_session_token', fallbackRes.token);
+        localStorage.setItem('client_session_user', JSON.stringify(fallbackRes.user));
         return fallbackRes;
       }
       throw err;
@@ -100,12 +105,20 @@ export const api = {
     }
   },
 
-  changePassword: async (newPassword: string, currentPassword?: string) => {
+  changePassword: async (newPassword: string, currentPassword?: string, username?: string, isForcedFirstLogin?: boolean) => {
     try {
-      return await request<{ success: boolean; message: string }>('/api/auth/change-password', {
+      const res = await request<{ success: boolean; message: string; token?: string; user?: User }>('/api/auth/change-password', {
         method: 'POST',
-        body: JSON.stringify({ newPassword, currentPassword }),
+        body: JSON.stringify({ newPassword, currentPassword, username, isForcedFirstLogin }),
       });
+      if (res.token) {
+        setStoredToken(res.token);
+      }
+      if (res.user) {
+        localStorage.setItem('client_session_user', JSON.stringify(res.user));
+        localStorage.setItem('user', JSON.stringify(res.user));
+      }
+      return res;
     } catch (err: any) {
       if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
         return await clientDb.changePassword(newPassword);
@@ -317,7 +330,7 @@ export const api = {
     }
   },
 
-  getExportUrl: (format: 'csv' | 'xlsx', params: Record<string, string> = {}) => {
+  getExportUrl: (format: 'csv' | 'xlsx' | 'pdf', params: Record<string, string> = {}) => {
     const query = new URLSearchParams({ ...params, format }).toString();
     return `/api/reports/export?${query}`;
   },

@@ -3,16 +3,16 @@
     {
       "id": "usr_admin0",
       "username": "Admin0",
-      "passwordHash": "43f14385c2602c2c9f7cc3fb51696d731d71e4526ec89a36eb70162a0bd339ce69a7a20cf4055278145abf4cd6f3a5c8c468dba91f0b57b0922e917908b57fa6",
-      "salt": "0e9c59a66cbf5e4fa0571180de4c4546",
+      "passwordHash": "b23db3d7086e97ae332cdddc6d6fc18a099e5d562a42b4293899d6608a6c391007ba9ccddd7d8cc9bc4ac8cf5fde8cdba0f480dbd159eb32d9dc21d8fae4a6e5",
+      "salt": "dd27c530943242282b4133d960aaf420",
       "role": "Admin",
       "name": "EBL System Administrator",
       "email": "admin0@ebl.com.bd",
       "mobile": "+8801711000001",
       "status": "Active",
-      "mustChangePassword": true,
+      "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-09-30T16:37:31.889Z"
+      "lastLogin": "2026-10-02T06:49:36.582Z"
     },
     {
       "id": "usr_mentor12345",
@@ -26,7 +26,7 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-09-30T16:38:11.395Z"
+      "lastLogin": "2026-10-02T06:35:30.014Z"
     },
     {
       "id": "usr_rm104393",
@@ -41,7 +41,7 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-09-30T16:36:38.805Z"
+      "lastLogin": "2026-10-02T06:42:43.504Z"
     },
     {
       "id": "usr_rm105210",
@@ -235,6 +235,133 @@
   ],
   "attachments": [],
   "auditLogs": [
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "PASSWORD_CHANGE",
+      "details": "User Admin0 successfully updated their password",
+      "id": "log_1790923776646_3ih3c",
+      "timestamp": "2026-10-02T06:49:36.646Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "PASSWORD_CHANGE",
+      "details": "User Admin0 successfully updated their password",
+      "id": "log_1790923776621_ajh6b",
+      "timestamp": "2026-10-02T06:49:36.621Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1790923776583_7cigw",
+      "timestamp": "2026-10-02T06:49:36.583Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "PASSWORD_CHANGE",
+      "details": "User Admin0 successfully updated their password",
+      "id": "log_1790923767372_7rui4",
+      "timestamp": "2026-10-02T06:49:27.372Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1790923767336_q0ful",
+      "timestamp": "2026-10-02T06:49:27.336Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "PASSWORD_CHANGE",
+      "details": "User Admin0 successfully updated their password",
+      "id": "log_1790923746683_s7ifc",
+      "timestamp": "2026-10-02T06:49:06.683Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1790923746630_mcqx7",
+      "timestamp": "2026-10-02T06:49:06.630Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "PASSWORD_CHANGE",
+      "details": "User Admin0 successfully updated their password",
+      "id": "log_1790923611698_0hmjf",
+      "timestamp": "2026-10-02T06:46:51.698Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1790923611675_e88ko",
+      "timestamp": "2026-10-02T06:46:51.675Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1790923426774_4qm4e",
+      "timestamp": "2026-10-02T06:43:46.774Z"
+    },
+    {
+      "userId": "usr_rm104393",
+      "username": "104393",
+      "role": "RM",
+      "rmCode": "104393",
+      "action": "LOGIN",
+      "details": "User 104393 (RM) logged in successfully",
+      "id": "log_1790923363504_uc9cu",
+      "timestamp": "2026-10-02T06:42:43.504Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "EXPORT",
+      "details": "Exported 6 records in format PDF",
+      "id": "log_1790922930106_flfqh",
+      "timestamp": "2026-10-02T06:35:30.106Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1790922930014_vr8lc",
+      "timestamp": "2026-10-02T06:35:30.014Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1790922929987_o2qto",
+      "timestamp": "2026-10-02T06:35:29.987Z"
+    },
     {
       "userId": "usr_mentor12345",
       "username": "12345",

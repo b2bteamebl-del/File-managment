@@ -71,6 +71,12 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({ currentTab, onSelectTa
         icon: MapPin,
         color: 'bg-rose-600',
       },
+      {
+        id: 'sync',
+        label: 'Google Sheets',
+        icon: Sheet,
+        color: 'bg-emerald-600',
+      },
     ] : []),
     {
       id: 'reports',
@@ -79,12 +85,6 @@ export const FloatingNav: React.FC<FloatingNavProps> = ({ currentTab, onSelectTa
       color: 'bg-amber-600',
     },
     ...(role !== 'RM' ? [
-      {
-        id: 'sync',
-        label: 'Google Sheets',
-        icon: Sheet,
-        color: 'bg-emerald-600',
-      },
       {
         id: 'audit',
         label: 'Audit Trail',

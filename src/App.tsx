@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext.js';
 import { Login } from './pages/Login.js';
 import { Navbar } from './components/layout/Navbar.js';
@@ -17,12 +17,20 @@ import { SettingsPage } from './pages/SettingsPage.js';
 import { LocationMonitorPage } from './pages/LocationMonitorPage.js';
 import { FloatingNav } from './components/common/FloatingNav.js';
 import { MobileSMSBanner } from './components/common/MobileSMSBanner.js';
+import { getUserPreferences, applyUserPreferences } from './utils/userPreferences.js';
 
 function MainApp() {
   const { user, isLoading } = useAuth();
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [drilldownRmCode, setDrilldownRmCode] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (user?.username) {
+      const prefs = getUserPreferences(user.username);
+      applyUserPreferences(prefs);
+    }
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -80,8 +88,10 @@ function MainApp() {
         return <ReportsPage />;
 
       case 'sync':
-        if (user.role === 'RM') {
-          return <RMDashboard onNavigateToFiles={() => setCurrentTab('files')} />;
+        if (user.role !== 'Mentor') {
+          return user.role === 'RM' 
+            ? <RMDashboard onNavigateToFiles={() => setCurrentTab('files')} />
+            : <AdminDashboard onSelectRMForDrilldown={handleDrilldownRM} />;
         }
         return <SheetsSyncPage />;
 

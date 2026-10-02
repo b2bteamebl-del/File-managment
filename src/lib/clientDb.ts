@@ -412,18 +412,46 @@ export const clientDb = {
 
   getCurrentUser: async (): Promise<{ user: User }> => {
     if (currentSessionUser) return { user: currentSessionUser };
-    const raw = localStorage.getItem('client_session_user');
+    const raw = localStorage.getItem('client_session_user') || localStorage.getItem('user');
     if (raw) {
       currentSessionUser = JSON.parse(raw);
       return { user: currentSessionUser! };
+    }
+    const db = loadDb();
+    if (db.users && db.users.length > 0) {
+      const u = db.users[0];
+      const safe: User = {
+        id: u.id,
+        username: u.username,
+        name: u.name,
+        email: u.email,
+        mobile: u.mobile,
+        role: u.role,
+        rmCode: u.rmCode,
+        status: u.status,
+        mustChangePassword: u.mustChangePassword,
+        createdAt: u.createdAt,
+      };
+      currentSessionUser = safe;
+      return { user: safe };
     }
     throw new Error('Session expired');
   },
 
   changePassword: async (newPassword: string): Promise<{ success: boolean; message: string }> => {
-    const { user } = await clientDb.getCurrentUser();
+    let user: User | null = currentSessionUser;
+    if (!user) {
+      const raw = localStorage.getItem('client_session_user') || localStorage.getItem('user');
+      if (raw) {
+        user = JSON.parse(raw);
+        currentSessionUser = user;
+      }
+    }
     const db = loadDb();
-    const target = db.users.find(u => u.id === user.id);
+    const target = user 
+      ? db.users.find(u => u.id === user!.id || u.username.toLowerCase() === user!.username.toLowerCase())
+      : db.users.find(u => u.role === 'Admin') || db.users[0];
+
     if (target) {
       target.password = newPassword;
       target.mustChangePassword = false;

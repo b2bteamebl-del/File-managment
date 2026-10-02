@@ -2,12 +2,13 @@ import { Router, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { db } from '../db.js';
-import { requireAuth, requireAdminOrMentor, AuthenticatedRequest } from '../middleware/auth.js';
+import { requireAuth, requireRoles, AuthenticatedRequest } from '../middleware/auth.js';
 import { SheetsSyncService } from '../sheetsSync.js';
 
 const router = Router();
 router.use(requireAuth);
-router.use(requireAdminOrMentor);
+// Admin cannot see or access any Google Sheet sync; ONLY Mentor is authorized
+router.use(requireRoles(['Mentor']));
 
 // Sync Status
 router.get('/status', (req: AuthenticatedRequest, res: Response) => {

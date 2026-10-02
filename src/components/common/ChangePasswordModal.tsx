@@ -46,7 +46,12 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const res = await api.changePassword(newPassword, isForcedFirstLogin ? undefined : currentPassword);
+      const res = await api.changePassword(
+        newPassword, 
+        isForcedFirstLogin ? undefined : currentPassword,
+        user?.username,
+        isForcedFirstLogin
+      );
       setSuccess(res.message || 'Password changed successfully!');
       updateUserLocal({ mustChangePassword: false });
       setTimeout(() => {

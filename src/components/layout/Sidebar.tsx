@@ -66,12 +66,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab, isOpe
       label: role === 'RM' ? 'My Reports & Export' : 'Reports & Analytics',
       icon: BarChart3,
     },
-    ...(role !== 'RM' ? [
+    // Google Sheets Sync: ONLY Mentor can access (Admin cannot see or access sync)
+    ...(role === 'Mentor' ? [
       {
         id: 'sync',
         label: 'Google Sheets Sync',
         icon: Sheet,
       },
+    ] : []),
+    ...(role !== 'RM' ? [
       {
         id: 'audit',
         label: 'Audit Trail Logs',

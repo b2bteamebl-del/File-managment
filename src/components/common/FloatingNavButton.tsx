@@ -66,6 +66,12 @@ export const FloatingNavButton: React.FC<FloatingNavButtonProps> = ({ currentTab
         color: 'text-rose-600',
         badge: 'Live',
       },
+      {
+        id: 'sync',
+        label: 'Google Sheets Sync',
+        icon: Sheet,
+        color: 'text-teal-600',
+      },
     ] : []),
     {
       id: 'reports',
@@ -74,12 +80,6 @@ export const FloatingNavButton: React.FC<FloatingNavButtonProps> = ({ currentTab
       color: 'text-amber-600',
     },
     ...(role !== 'RM' ? [
-      {
-        id: 'sync',
-        label: 'Google Sheets Sync',
-        icon: Sheet,
-        color: 'text-teal-600',
-      },
       {
         id: 'audit',
         label: 'Audit Logs',

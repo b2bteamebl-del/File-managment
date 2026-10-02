@@ -600,19 +600,6 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
                   <p className="text-[10px] text-slate-400 mt-0.5">Card / Account identification number</p>
                 </div>
 
-                {/* GPS Location Auto-Captured: Silent for RM & Admin; Visible ONLY to Mentor */}
-                {user?.role === 'Mentor' && formData.locationAddress && (
-                  <div className="sm:col-span-2 md:col-span-3 p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between">
-                    <span className="flex items-center gap-1.5 font-medium">
-                      <MapPin className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span>Entry Location Detected (Mentor View): <strong>{formData.locationAddress}</strong></span>
-                    </span>
-                    <span className="text-[10px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-300">
-                      GPS Tagged
-                    </span>
-                  </div>
-                )}
-
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Assigned RM Code {user?.role === 'RM' && '(Read-Only)'}
@@ -640,27 +627,15 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
                 </div>
 
                 <div className="sm:col-span-2 md:col-span-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-semibold text-slate-700">
-                      Office Address <span className="text-red-500">*</span>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={handleAutoDetectOfficeAddress}
-                      disabled={isDetectingOfficeAddress}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md font-bold text-[11px] transition border border-blue-200 shadow-2xs disabled:opacity-50"
-                      title="Use Google/GPS location to identify and fill current address"
-                    >
-                      <MapPin className={`w-3.5 h-3.5 text-rose-500 ${isDetectingOfficeAddress ? 'animate-bounce' : ''}`} />
-                      <span>{isDetectingOfficeAddress ? 'Detecting Location...' : '📍 Auto-Detect Current Location'}</span>
-                    </button>
-                  </div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Office Address <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     required
                     value={formData.officeAddress}
                     onChange={e => setFormData({ ...formData, officeAddress: e.target.value })}
-                    placeholder="Building, Road, Area, Dhaka (or click Auto-Detect Current Location above)"
+                    placeholder="Building, Road, Area, Dhaka"
                     className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
@@ -1014,26 +989,14 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
                 </div>
 
                 <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block text-xs font-semibold text-slate-700">
-                      CPV Verified Address
-                    </label>
-                    <button
-                      type="button"
-                      onClick={handleAutoDetectCpvAddress}
-                      disabled={isDetectingCpvAddress}
-                      className="inline-flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-bold transition disabled:opacity-50"
-                      title="Use Google/GPS location to identify and fill CPV field address"
-                    >
-                      <MapPin className={`w-3.5 h-3.5 text-rose-500 ${isDetectingCpvAddress ? 'animate-bounce' : ''}`} />
-                      <span>{isDetectingCpvAddress ? 'Detecting...' : '📍 Auto-Detect Location'}</span>
-                    </button>
-                  </div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    CPV Verified Address
+                  </label>
                   <input
                     type="text"
                     value={formData.cpvAddress}
                     onChange={e => setFormData({ ...formData, cpvAddress: e.target.value })}
-                    placeholder="Physical address verified in person (or click Auto-Detect Location)"
+                    placeholder="Physical address verified in person"
                     className="w-full px-3 py-2 text-xs border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none bg-white"
                   />
                 </div>
@@ -1247,7 +1210,7 @@ export const FileEntryAndList: React.FC<FileEntryAndListProps> = ({ initialFilte
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-[#0F294A] text-white uppercase text-[10px] tracking-wider font-semibold">
+            <thead className="theme-table-header text-white uppercase text-[10px] tracking-wider font-semibold transition-colors duration-300">
               <tr>
                 <th className="py-3 px-3">File ID</th>
                 <th className="py-3 px-2">CC-number</th>

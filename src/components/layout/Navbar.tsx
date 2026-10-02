@@ -81,7 +81,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-[#0F294A] text-white border-b border-[#1b3d6b] shadow-md">
+      <header 
+        className="sticky top-0 z-40 theme-navbar text-white border-b border-white/10 shadow-md transition-all duration-300"
+        style={{ background: 'var(--theme-navbar-bg, linear-gradient(135deg, #0F294A, #163a69))' }}
+      >
         <div className="px-4 sm:px-6 py-2.5 flex items-center justify-between gap-4">
           {/* Left: Mobile hamburger & Team Branding */}
           <div className="flex items-center gap-3">
@@ -129,8 +132,8 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
               </button>
             )}
 
-            {/* Google Sheets Sync Pill (For Admin/Mentor) */}
-            {user?.role !== 'RM' && (
+            {/* Google Sheets Sync Pill (Visible ONLY to Mentor - Admin cannot see or access sync) */}
+            {user?.role === 'Mentor' && (
               <div className="hidden lg:flex items-center gap-2 bg-slate-900/80 px-2.5 py-1 rounded-lg border border-slate-700/70 text-xs">
                 <Sheet className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="text-[11px] text-slate-300">
@@ -210,19 +213,17 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar, onNavigate }) =
                     </button>
                   )}
 
-                  {user?.role !== 'RM' && onNavigate && (
-                    <>
-                      <button
-                        onClick={() => {
-                          setShowProfileMenu(false);
-                          onNavigate('sync');
-                        }}
-                        className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700"
-                      >
-                        <Sheet className="w-4 h-4 text-emerald-600" />
-                        <span>Google Sheets Sync</span>
-                      </button>
-                    </>
+                  {user?.role === 'Mentor' && onNavigate && (
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        onNavigate('sync');
+                      }}
+                      className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center gap-2 text-slate-700"
+                    >
+                      <Sheet className="w-4 h-4 text-emerald-600" />
+                      <span>Google Sheets Sync</span>
+                    </button>
                   )}
 
                   <div className="border-t border-slate-100 my-1" />

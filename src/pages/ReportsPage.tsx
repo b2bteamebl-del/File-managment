@@ -73,13 +73,17 @@ export const ReportsPage: React.FC = () => {
     fetchFilteredFiles();
   }, [selectedRm, productType, applicationStatus, activeStatus, cpvStatus]);
 
-  const handleExport = (format: 'xlsx' | 'csv') => {
+  const handleExport = (format: 'xlsx' | 'csv' | 'pdf') => {
     const params: Record<string, string> = {};
     if (selectedRm !== 'all') params.rmCode = selectedRm;
     if (productType !== 'all') params.productType = productType;
     if (applicationStatus !== 'all') params.applicationStatus = applicationStatus;
     const url = api.getExportUrl(format, params);
-    window.location.href = url;
+    if (format === 'pdf') {
+      window.open(url, '_blank');
+    } else {
+      window.location.href = url;
+    }
   };
 
   const handlePrint = () => {
@@ -104,11 +108,20 @@ export const ReportsPage: React.FC = () => {
 
         <div className="flex items-center gap-2 flex-wrap">
           <button
+            onClick={() => handleExport('pdf')}
+            className="px-4 py-2 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
+            title="Generate and download formatted PDF report"
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Download PDF Report (পিডিএফ)</span>
+          </button>
+
+          <button
             onClick={() => handleExport('xlsx')}
-            className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center gap-1.5"
+            className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition shadow-xs flex items-center gap-1.5 cursor-pointer"
           >
             <Download className="w-3.5 h-3.5" />
-            <span>Download Excel (.xlsx)</span>
+            <span>Excel (.xlsx)</span>
           </button>
 
           <button

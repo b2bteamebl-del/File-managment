@@ -7,8 +7,8 @@ import { SheetsSyncService } from '../sheetsSync.js';
 
 const router = Router();
 router.use(requireAuth);
-// Admin cannot see or access any Google Sheet sync; ONLY Mentor is authorized
-router.use(requireRoles(['Mentor']));
+// Mentor and Admin are authorized to manage Google Sheets sync and view script code
+router.use(requireRoles(['Mentor', 'Admin']));
 
 // Sync Status
 router.get('/status', (req: AuthenticatedRequest, res: Response) => {
@@ -37,6 +37,12 @@ router.get('/status', (req: AuthenticatedRequest, res: Response) => {
 // Test Connection
 router.post('/test', async (req: AuthenticatedRequest, res: Response) => {
   const { url, token } = req.body;
+  if (url && typeof url === 'string' && url.trim()) {
+    db.updateSettings({
+      appsScriptWebAppUrl: url.trim(),
+      ...(token ? { appsScriptSecretToken: token.trim() } : {}),
+    });
+  }
   const result = await SheetsSyncService.testConnection(url, token);
   return res.json(result);
 });
@@ -44,12 +50,25 @@ router.post('/test', async (req: AuthenticatedRequest, res: Response) => {
 // Initialize Tabs and Headers in Google Sheets
 router.post('/init-sheets', async (req: AuthenticatedRequest, res: Response) => {
   const { url, token } = req.body;
+  if (url && typeof url === 'string' && url.trim()) {
+    db.updateSettings({
+      appsScriptWebAppUrl: url.trim(),
+      ...(token ? { appsScriptSecretToken: token.trim() } : {}),
+    });
+  }
   const result = await SheetsSyncService.initSheets(url, token);
   return res.json(result);
 });
 
 // Trigger Manual Sync
 router.post('/trigger', async (req: AuthenticatedRequest, res: Response) => {
+  const { url, token } = req.body || {};
+  if (url && typeof url === 'string' && url.trim()) {
+    db.updateSettings({
+      appsScriptWebAppUrl: url.trim(),
+      ...(token ? { appsScriptSecretToken: token.trim() } : {}),
+    });
+  }
   const result = await SheetsSyncService.batchSyncAll();
   return res.json(result);
 });

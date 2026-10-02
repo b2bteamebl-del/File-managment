@@ -26,8 +26,8 @@ function MainApp() {
   const [drilldownRmCode, setDrilldownRmCode] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (user?.username) {
-      const prefs = getUserPreferences(user.username);
+    if (user) {
+      const prefs = getUserPreferences(user);
       applyUserPreferences(prefs);
     }
   }, [user]);

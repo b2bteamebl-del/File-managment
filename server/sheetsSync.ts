@@ -59,7 +59,11 @@ export class SheetsSyncService {
         if (text.includes('"success":true') || text.includes('success')) {
           json = { success: true, message: 'Google Sheets operation accepted' };
         } else {
-          json = { success: false, error: text.slice(0, 150) };
+          let error = text.slice(0, 150);
+          if (text.includes('找不到以下指令碼函式') || text.includes('Script function not found') || text.includes('doPost') || text.includes('doGet')) {
+            error = 'Apps Script এখনো পুরোনো ভার্সনে চলছে! Apps Script এ গিয়ে Deploy > Manage deployments > Edit (পেন্সিল আইকন) > Version: New version সিলেক্ট করে Deploy দিন।';
+          }
+          json = { success: false, error };
         }
       }
 
@@ -81,6 +85,12 @@ export class SheetsSyncService {
           redirect: 'follow',
         });
         const getText = await getRes.text();
+        if (getText.includes('找不到以下指令碼函式') || getText.includes('Script function not found')) {
+          return {
+            success: false,
+            error: 'Apps Script এখনো পুরোনো ভার্সনে চলছে! Apps Script এ গিয়ে Deploy > Manage deployments > Edit (পেন্সিল আইকন) > Version: New version সিলেক্ট করে Deploy দিন।',
+          };
+        }
         return JSON.parse(getText);
       } catch {
         // Return original error
@@ -122,6 +132,14 @@ export class SheetsSyncService {
       const text = await response.text();
       let data: any = {};
       try { data = JSON.parse(text); } catch { data = { info: text }; }
+
+      if (text.includes('找不到以下指令碼函式') || text.includes('Script function not found') || text.includes('doGet') || text.includes('doPost')) {
+        return {
+          success: false,
+          message: 'Apps Script ডিপ্লয়মেন্ট পুরোনো ভার্সনে আটকে আছে! Google Apps Script-এ গিয়ে Deploy > Manage deployments > Edit (পেন্সিল আইকন) > Version: New version সিলেক্ট করে Deploy প্রেস করুন।',
+          error: 'Script function not found: doGet / doPost in currently active deployment version',
+        };
+      }
 
       return {
         success: true,
@@ -272,6 +290,93 @@ export class SheetsSyncService {
       return {
         success: false,
         message: `Failed to auto-sync RM ${rm.rmCode}`,
+        error: err.message,
+      };
+    }
+  }
+
+  /**
+   * AUTOMATIC REAL-TIME SYNC: Sync any User (Admin, Mentor, RM) with their password change, profile, and theme preferences
+   */
+  public static async syncUser(user: any): Promise<SyncResult> {
+    const settings = db.getSettings();
+    if (!settings.appsScriptWebAppUrl) {
+      return { success: false, message: 'Apps Script URL not set.' };
+    }
+
+    const payload = {
+      rmCode: user.rmCode || user.username,
+      rmName: user.name,
+      mobile: user.mobile || '',
+      email: user.email || '',
+      officeAddress: 'Dhaka Principal Office',
+      accountStatus: user.status || 'Active',
+      createdAt: user.createdAt,
+      lastLogin: user.lastLogin || '',
+      authUid: user.id,
+      role: user.role,
+      theme: user.preferences?.themeColor || 'navy',
+      preferences: JSON.stringify(user.preferences || {}),
+    };
+
+    try {
+      const res = await this.postToAppsScript('syncRM', { data: payload });
+      return {
+        success: res.success,
+        message: res.success ? `Auto-synced user ${user.username} to Google Sheets` : res.error,
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: `Failed to auto-sync user ${user.username}`,
+        error: err.message,
+      };
+    }
+  }
+
+  /**
+   * AUTOMATIC REAL-TIME SYNC: Sync Audit Log to Audit_Logs tab in Google Sheets
+   */
+  public static async syncAuditLog(log: any): Promise<SyncResult> {
+    const settings = db.getSettings();
+    if (!settings.appsScriptWebAppUrl) {
+      return { success: false, message: 'Apps Script URL not set.' };
+    }
+
+    try {
+      const res = await this.postToAppsScript('logAudit', { data: log });
+      return {
+        success: res.success,
+        message: res.success ? `Auto-synced audit log to Google Sheets` : res.error,
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: `Failed to sync audit log`,
+        error: err.message,
+      };
+    }
+  }
+
+  /**
+   * AUTOMATIC REAL-TIME SYNC: Sync System Settings to App_Settings tab in Google Sheets
+   */
+  public static async syncSettings(appSettings: any): Promise<SyncResult> {
+    const settings = db.getSettings();
+    if (!settings.appsScriptWebAppUrl) {
+      return { success: false, message: 'Apps Script URL not set.' };
+    }
+
+    try {
+      const res = await this.postToAppsScript('syncSettings', { data: appSettings });
+      return {
+        success: res.success,
+        message: res.success ? `Auto-synced app settings to Google Sheets` : res.error,
+      };
+    } catch (err: any) {
+      return {
+        success: false,
+        message: `Failed to sync app settings to Google Sheets`,
         error: err.message,
       };
     }

@@ -29,6 +29,13 @@ export interface UserRecord {
   mustChangePassword: boolean;
   createdAt: string;
   lastLogin?: string;
+  preferences?: {
+    fontSize?: 'normal' | 'medium' | 'large';
+    language?: 'en' | 'bn';
+    fontFamily?: 'inter' | 'roboto' | 'poppins' | 'siliguri';
+    themeColor?: string;
+    profilePicture?: string;
+  };
 }
 
 export interface StoredAttachment extends FileAttachment {

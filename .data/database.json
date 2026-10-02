@@ -26,7 +26,13 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-10-02T06:35:30.014Z"
+      "lastLogin": "2026-10-02T07:27:11.101Z",
+      "preferences": {
+        "themeColor": "emerald",
+        "fontSize": "medium",
+        "fontFamily": "siliguri",
+        "language": "bn"
+      }
     },
     {
       "id": "usr_rm104393",
@@ -235,6 +241,96 @@
   ],
   "attachments": [],
   "auditLogs": [
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1790926031101_e9ah0",
+      "timestamp": "2026-10-02T07:27:11.101Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "EXPORT",
+      "details": "Exported 6 records in format XLSX",
+      "id": "log_1790925558531_9cx43",
+      "timestamp": "2026-10-02T07:19:18.531Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1790925558512_cg7gd",
+      "timestamp": "2026-10-02T07:19:18.512Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "EXPORT",
+      "details": "Exported 6 records in format PDF",
+      "id": "log_1790925558478_3vas9",
+      "timestamp": "2026-10-02T07:19:18.478Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "EXPORT",
+      "details": "Exported 6 records in format XLSX",
+      "id": "log_1790925558452_dccp0",
+      "timestamp": "2026-10-02T07:19:18.452Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "UPDATE_PREFERENCES",
+      "details": "User 12345 saved preferences to database & sheet (Theme: emerald, Font: medium)",
+      "id": "log_1790925168740_vchd7",
+      "timestamp": "2026-10-02T07:12:48.740Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1790925168716_vhgt9",
+      "timestamp": "2026-10-02T07:12:48.716Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "UPDATE",
+      "details": "Updated application settings and dropdown configurations",
+      "id": "log_1790924161684_utntv",
+      "timestamp": "2026-10-02T06:56:01.684Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "UPDATE",
+      "details": "Updated application settings and dropdown configurations",
+      "id": "log_1790924142816_0vtnr",
+      "timestamp": "2026-10-02T06:55:42.816Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1790924120895_xm90l",
+      "timestamp": "2026-10-02T06:55:20.895Z"
+    },
     {
       "userId": "usr_admin0",
       "username": "Admin0",
@@ -640,9 +736,9 @@
     "syncIntervalMinutes": 5,
     "lastSyncStatus": "Idle",
     "updatedBy": "12345",
-    "updatedAt": "2026-09-30T16:36:14.272Z",
+    "updatedAt": "2026-10-02T06:56:01.683Z",
     "appName": "B2B team",
-    "teamName": "Team Member Data Management System"
+    "teamName": "Data Management System"
   },
   "notifications": [
     {

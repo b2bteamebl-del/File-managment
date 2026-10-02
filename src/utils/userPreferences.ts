@@ -114,7 +114,14 @@ const DEFAULT_PREFERENCES: UserDisplayPreferences = {
   profilePicture: '',
 };
 
-export function getUserPreferences(username?: string): UserDisplayPreferences {
+import { api } from '../lib/api.js';
+
+export function getUserPreferences(userOrUsername?: any): UserDisplayPreferences {
+  if (userOrUsername && typeof userOrUsername === 'object' && userOrUsername.preferences) {
+    return { ...DEFAULT_PREFERENCES, ...userOrUsername.preferences };
+  }
+
+  const username = typeof userOrUsername === 'string' ? userOrUsername : userOrUsername?.username;
   const key = `user_pref_${username || 'default'}`;
   try {
     const raw = localStorage.getItem(key);
@@ -130,9 +137,15 @@ export function getUserPreferences(username?: string): UserDisplayPreferences {
 export function saveUserPreferences(username: string, prefs: UserDisplayPreferences): void {
   const key = `user_pref_${username || 'default'}`;
   try {
+    // 1. Instant local storage update
     localStorage.setItem(key, JSON.stringify(prefs));
     applyUserPreferences(prefs);
     window.dispatchEvent(new CustomEvent('ebl-theme-changed', { detail: prefs }));
+
+    // 2. Permanent Database storage & real-time Google Sheets sync!
+    api.saveUserPreferences(prefs).catch(err => {
+      console.warn('[Sync] Could not save preferences to remote database:', err);
+    });
   } catch (e) {
     console.error('Failed to save preferences:', e);
   }

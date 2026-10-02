@@ -105,6 +105,25 @@ export const api = {
     }
   },
 
+  getUserPreferences: async () => {
+    try {
+      return await request<{ preferences: any }>('/api/auth/preferences');
+    } catch {
+      return { preferences: {} };
+    }
+  },
+
+  saveUserPreferences: async (preferences: any) => {
+    try {
+      return await request<{ success: boolean; preferences: any; message: string }>('/api/auth/preferences', {
+        method: 'POST',
+        body: JSON.stringify(preferences),
+      });
+    } catch (err: any) {
+      return { success: false, preferences, message: err.message };
+    }
+  },
+
   changePassword: async (newPassword: string, currentPassword?: string, username?: string, isForcedFirstLogin?: boolean) => {
     try {
       const res = await request<{ success: boolean; message: string; token?: string; user?: User }>('/api/auth/change-password', {
@@ -331,8 +350,37 @@ export const api = {
   },
 
   getExportUrl: (format: 'csv' | 'xlsx' | 'pdf', params: Record<string, string> = {}) => {
-    const query = new URLSearchParams({ ...params, format }).toString();
+    const token = getStoredToken();
+    const query = new URLSearchParams({ 
+      ...params, 
+      format,
+      ...(token ? { token } : {})
+    }).toString();
     return `/api/reports/export?${query}`;
+  },
+
+  downloadExport: async (format: 'csv' | 'xlsx', params: Record<string, string> = {}, defaultFilename?: string): Promise<void> => {
+    const token = getStoredToken();
+    const query = new URLSearchParams({ ...params, format, ...(token ? { token } : {}) }).toString();
+    const headers: Record<string, string> = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    const res = await fetch(`/api/reports/export?${query}`, { headers });
+    if (!res.ok) {
+      throw new Error(`Export download failed (${res.status} ${res.statusText})`);
+    }
+
+    const blob = await res.blob();
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = defaultFilename || `EBL_Banking_Report_${new Date().toISOString().slice(0, 10)}.${format}`;
+    document.body.appendChild(link);
+    link.click();
+    setTimeout(() => {
+      window.URL.revokeObjectURL(downloadUrl);
+      document.body.removeChild(link);
+    }, 200);
   },
 
   // Settings
@@ -409,10 +457,11 @@ export const api = {
     }
   },
 
-  triggerSync: async () => {
+  triggerSync: async (params?: { url?: string; token?: string }) => {
     try {
       return await request<{ success: boolean; message: string; results?: any }>('/api/sync/trigger', {
         method: 'POST',
+        body: params ? JSON.stringify(params) : undefined,
       });
     } catch (err: any) {
       if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {

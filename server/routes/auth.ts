@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { db, verifyPassword, hashPassword } from '../db.js';
 import { generateToken, verifyToken, requireAuth, AuthenticatedRequest } from '../middleware/auth.js';
+import { SheetsSyncService } from '../sheetsSync.js';
 
 const router = Router();
 
@@ -54,6 +55,7 @@ router.post('/login', (req, res) => {
       mustChangePassword: user.mustChangePassword,
       createdAt: user.createdAt,
       lastLogin: now,
+      preferences: user.preferences,
     },
   });
 });
@@ -74,7 +76,46 @@ router.get('/me', requireAuth, (req: AuthenticatedRequest, res: Response) => {
       mustChangePassword: user.mustChangePassword,
       createdAt: user.createdAt,
       lastLogin: user.lastLogin,
+      preferences: user.preferences,
     },
+  });
+});
+
+// Get User Preferences directly from database
+router.get('/preferences', requireAuth, (req: AuthenticatedRequest, res: Response) => {
+  const user = req.user!;
+  return res.json({
+    preferences: user.preferences || {},
+  });
+});
+
+// Update User Preferences (Theme, Font, Lang, Profile Picture) - Persisted in Database & Google Sheets
+router.post('/preferences', requireAuth, (req: AuthenticatedRequest, res: Response) => {
+  const user = req.user!;
+  const preferences = req.body;
+
+  const updated = db.updateUser(user.id, { preferences });
+
+  const auditLog = db.addAuditLog({
+    userId: user.id,
+    username: user.username,
+    role: user.role,
+    rmCode: user.rmCode,
+    action: 'UPDATE_PREFERENCES',
+    details: `User ${user.username} saved preferences to database & sheet (Theme: ${preferences.themeColor || 'navy'}, Font: ${preferences.fontSize || 'normal'})`,
+  });
+
+  // Real-time sync to Google Sheets
+  if (updated) {
+    SheetsSyncService.syncUser(updated).catch(e => console.warn('[Auto-Sync] User sheet sync:', e));
+    SheetsSyncService.syncAuditLog(auditLog).catch(e => console.warn('[Auto-Sync] Audit sheet sync:', e));
+  }
+
+  return res.json({
+    success: true,
+    message: 'Preferences successfully saved in database and synced to Google Sheets',
+    preferences,
+    user: updated,
   });
 });
 
@@ -117,26 +158,32 @@ router.post('/change-password', (req, res) => {
   }
 
   const { hash, salt } = hashPassword(newPassword);
-  db.updateUser(user.id, {
+  const updatedUser = db.updateUser(user.id, {
     passwordHash: hash,
     salt: salt,
     mustChangePassword: false,
   });
 
-  db.addAuditLog({
+  const auditRecord = db.addAuditLog({
     userId: user.id,
     username: user.username,
     role: user.role,
     rmCode: user.rmCode,
     action: 'PASSWORD_CHANGE',
-    details: `User ${user.username} successfully updated their password`,
+    details: `User ${user.username} successfully updated their password in database and sheet`,
   });
+
+  // Real-time sync user and audit log to Google Sheets!
+  if (updatedUser) {
+    SheetsSyncService.syncUser(updatedUser).catch(e => console.warn('[Auto-Sync] Password change sheet sync:', e));
+    SheetsSyncService.syncAuditLog(auditRecord).catch(e => console.warn('[Auto-Sync] Audit sheet sync:', e));
+  }
 
   const newToken = generateToken(user);
 
   return res.json({ 
     success: true, 
-    message: 'Password updated successfully',
+    message: 'Password updated successfully in database and Google Sheets',
     token: newToken,
     user: {
       id: user.id,
@@ -150,6 +197,7 @@ router.post('/change-password', (req, res) => {
       mustChangePassword: false,
       createdAt: user.createdAt,
       lastLogin: user.lastLogin,
+      preferences: user.preferences,
     }
   });
 });

@@ -28,3 +28,47 @@
 .theme-primary-border {
   border-color: var(--color-primary, #0F294A) !important;
 }
+
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 8mm 6mm;
+  }
+
+  /* Hide all Web UI Chrome during printing */
+  header,
+  nav,
+  aside,
+  footer,
+  .no-print,
+  .print-hide,
+  button,
+  input,
+  select,
+  .floating-nav {
+    display: none !important;
+  }
+
+  body, html {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 9.5px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-only-statement {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

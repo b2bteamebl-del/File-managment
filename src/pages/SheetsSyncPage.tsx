@@ -15,10 +15,16 @@ import {
   Users,
   Paperclip,
   Sparkles,
-  ScrollText
+  ScrollText,
+  Download,
+  Copy,
+  Eye,
+  Code2,
+  X
 } from 'lucide-react';
 import { api } from '../lib/api.js';
 import { formatDhakaDateTime } from '../utils/dateTime.js';
+import { GOOGLE_APPS_SCRIPT_CODE } from '../utils/googleAppsScriptCode.js';
 
 export const SheetsSyncPage: React.FC = () => {
   const [syncStatus, setSyncStatus] = useState<any>(null);
@@ -32,6 +38,7 @@ export const SheetsSyncPage: React.FC = () => {
   const [isCreatingTabs, setIsCreatingTabs] = useState(false);
   const [createTabsResult, setCreateTabsResult] = useState<any>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [showCodeModal, setShowCodeModal] = useState(false);
 
   // Editable Web App URL and Sheet ID
   const [spreadsheetId, setSpreadsheetId] = useState('');
@@ -126,7 +133,10 @@ export const SheetsSyncPage: React.FC = () => {
   const handleTriggerBatchSync = async () => {
     setIsSyncing(true);
     try {
-      const res = await api.triggerSync();
+      const res = await api.triggerSync({
+        url: webAppUrl.trim(),
+        token: secretToken.trim(),
+      });
       alert(res.message || 'Sync completed!');
       fetchStatus();
     } catch (err: any) {
@@ -136,19 +146,66 @@ export const SheetsSyncPage: React.FC = () => {
     }
   };
 
+  const copyTextSafely = async (text: string): Promise<boolean> => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {
+      // fallback to execCommand
+    }
+
+    try {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      textArea.style.top = '-999999px';
+      textArea.setAttribute('readonly', '');
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return successful;
+    } catch {
+      return false;
+    }
+  };
+
   const handleCopyScriptCode = async () => {
+    let code = GOOGLE_APPS_SCRIPT_CODE;
     try {
       const res = await api.getScriptCode();
       if (res && res.code) {
-        await navigator.clipboard.writeText(res.code);
-        setCopiedCode(true);
-        setTimeout(() => setCopiedCode(false), 4000);
-      } else {
-        alert('Could not load Code.gs');
+        code = res.code;
       }
     } catch {
-      alert('Failed to copy Code.gs');
+      // fallback to embedded code
     }
+
+    const copied = await copyTextSafely(code);
+    if (copied) {
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 4000);
+    } else {
+      setShowCodeModal(true);
+    }
+  };
+
+  const handleDownloadCodeFile = () => {
+    const blob = new Blob([GOOGLE_APPS_SCRIPT_CODE], { type: 'text/javascript;charset=utf-8' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'Code.gs';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    }, 200);
   };
 
   return (
@@ -208,35 +265,59 @@ export const SheetsSyncPage: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap self-start sm:self-auto">
+            {/* Copy Button */}
             <button
               type="button"
               onClick={handleCopyScriptCode}
-              className={`px-4 py-3.5 rounded-xl text-xs font-bold transition flex items-center gap-2 whitespace-nowrap active:scale-98 cursor-pointer ${
+              className={`px-3.5 py-3 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap active:scale-98 cursor-pointer ${
                 copiedCode 
                   ? 'bg-emerald-600 text-white' 
                   : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
               }`}
               title="Click to copy full Code.gs script to clipboard"
             >
-              {copiedCode ? <Check className="w-4 h-4 text-emerald-300" /> : <ScrollText className="w-4 h-4 text-emerald-400" />}
-              <span>{copiedCode ? 'Code.gs Copied! (কপি হয়েছে)' : 'Copy Code.gs (কোড কপি)'}</span>
+              {copiedCode ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4 text-emerald-400" />}
+              <span>{copiedCode ? 'Copied! (কপি হয়েছে)' : 'Copy Code.gs (কপি)'}</span>
             </button>
 
+            {/* Direct File Download Button */}
+            <button
+              type="button"
+              onClick={handleDownloadCodeFile}
+              className="px-3.5 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap active:scale-98 cursor-pointer"
+              title="Download Code.gs file directly to your computer"
+            >
+              <Download className="w-4 h-4 text-teal-300" />
+              <span>Download File (ডাউনলোড)</span>
+            </button>
+
+            {/* View Full Code Modal Button */}
+            <button
+              type="button"
+              onClick={() => setShowCodeModal(true)}
+              className="px-3.5 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap active:scale-98 cursor-pointer"
+              title="View full script in modal"
+            >
+              <Eye className="w-4 h-4 text-blue-300" />
+              <span>View Code (কোড দেখুন)</span>
+            </button>
+
+            {/* Create Tabs & Headers Now Button */}
             <button
               type="button"
               onClick={handleCreateTabsAndHeaders}
               disabled={isCreatingTabs || !webAppUrl.trim()}
-              className="px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-40 text-white rounded-xl text-xs font-black transition shadow-lg shadow-emerald-500/25 flex items-center gap-2.5 whitespace-nowrap active:scale-98 cursor-pointer"
+              className="px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 disabled:opacity-40 text-white rounded-xl text-xs font-black transition shadow-lg shadow-emerald-500/25 flex items-center gap-2 whitespace-nowrap active:scale-98 cursor-pointer"
             >
               {isCreatingTabs ? (
                 <>
                   <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Creating Tabs & Headers...</span>
+                  <span>Creating Tabs...</span>
                 </>
               ) : (
                 <>
                   <TableProperties className="w-4 h-4" />
-                  <span>Create Tabs & Headers Now</span>
+                  <span>Create Tabs & Headers</span>
                 </>
               )}
             </button>
@@ -568,6 +649,80 @@ export const SheetsSyncPage: React.FC = () => {
           ২. এরপর সরাসরি <strong>"Create Tabs & Headers Now"</strong> বাটনে ক্লিক করলেই গুগল শিটে ৫টি নতুন ট্যাব তৈরি হয়ে যাবে এবং সমস্ত কলাম নেভি ব্লু হেডার সহ স্বয়ংক্রিয়ভাবে সাজানো হয়ে যাবে!
         </p>
       </div>
+
+      {/* Complete Code.gs Modal Viewer */}
+      {showCodeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="px-6 py-4 bg-[#0F294A] text-white flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <Code2 className="w-5 h-5 text-emerald-400" />
+                <div>
+                  <h3 className="font-bold text-sm">Google Apps Script Complete Code (Code.gs)</h3>
+                  <p className="text-[11px] text-slate-300">Copy this complete script into Google Apps Script editor</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCodeModal(false)}
+                className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Modal Body: Read-only Code View */}
+            <div className="p-4 flex-1 overflow-hidden flex flex-col space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-600 font-medium">
+                  Click below, press <kbd className="px-1.5 py-0.5 bg-slate-100 border rounded font-mono text-[10px]">Ctrl+A</kbd> then <kbd className="px-1.5 py-0.5 bg-slate-100 border rounded font-mono text-[10px]">Ctrl+C</kbd> or use the buttons on right:
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyScriptCode}
+                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                  >
+                    {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedCode ? 'Copied!' : 'Copy All'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownloadCodeFile}
+                    className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition flex items-center gap-1 cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download File</span>
+                  </button>
+                </div>
+              </div>
+
+              <textarea
+                readOnly
+                value={GOOGLE_APPS_SCRIPT_CODE}
+                onFocus={e => e.target.select()}
+                className="w-full flex-1 p-4 bg-slate-950 text-emerald-400 font-mono text-xs rounded-xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 overflow-y-auto selection:bg-emerald-900 selection:text-white"
+                rows={18}
+              />
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-3 bg-slate-100 border-t border-slate-200 flex justify-between items-center text-xs">
+              <span className="text-slate-500">
+                Spreadsheet ID: <strong className="font-mono text-slate-700">{spreadsheetId}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowCodeModal(false)}
+                className="px-5 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg font-bold transition cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

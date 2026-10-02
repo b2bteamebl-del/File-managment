@@ -1,5 +1,13 @@
 export type UserRole = 'RM' | 'Admin' | 'Mentor';
 
+export interface UserPreferences {
+  fontSize?: 'normal' | 'medium' | 'large';
+  language?: 'en' | 'bn';
+  fontFamily?: 'inter' | 'roboto' | 'poppins' | 'siliguri';
+  themeColor?: string;
+  profilePicture?: string;
+}
+
 export interface User {
   id: string;
   username: string; // RM code (e.g. "104393") or "Admin0" or "12345"
@@ -12,6 +20,7 @@ export interface User {
   mustChangePassword?: boolean;
   createdAt: string;
   lastLogin?: string;
+  preferences?: UserPreferences;
 }
 
 export type ApplicationStatus =
@@ -108,7 +117,7 @@ export interface AuditLog {
   userId: string;
   username: string;
   role: UserRole;
-  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'PASSWORD_CHANGE' | 'EXPORT' | 'RM_STATUS_CHANGE' | 'SHEETS_SYNC';
+  action: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'PASSWORD_CHANGE' | 'EXPORT' | 'RM_STATUS_CHANGE' | 'SHEETS_SYNC' | 'UPDATE_PREFERENCES';
   fileId?: string;
   rmCode?: string;
   timestamp: string; // ISO Asia/Dhaka formatted

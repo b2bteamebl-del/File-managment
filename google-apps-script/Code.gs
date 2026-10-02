@@ -36,7 +36,7 @@ var SHEETS = {
 };
 
 var HEADERS = {
-  RM_MAPPING: ["RM_CODE", "RM_NAME", "MOBILE", "EMAIL", "OFFICE_ADDRESS", "ACCOUNT_STATUS", "CREATED_AT", "LAST_LOGIN", "AUTH_UID"],
+  RM_MAPPING: ["RM_CODE", "RM_NAME", "MOBILE", "EMAIL", "OFFICE_ADDRESS", "ACCOUNT_STATUS", "CREATED_AT", "LAST_LOGIN", "AUTH_UID", "ROLE", "THEME", "PREFERENCES"],
   CUSTOMER_FILES: ["FILE_ID", "CC_NUMBER", "CUSTOMER_NAME", "COMPANY_NAME", "OFFICE_ADDRESS", "MOBILE", "ALT_MOBILE", "EMAIL", "PRODUCT_TYPE", "APPLICATION_STATUS", "ACTIVE_STATUS", "RM_CODE", "PENDING_DOCUMENTS", "REMARKS", "LOCATION_ADDRESS", "CPV_STATUS", "CPV_DATE", "CPV_ADDRESS", "CPV_REMARKS", "CREATED_AT", "UPDATED_AT", "CREATED_BY", "UPDATED_BY", "SUBMITTED_AT", "APPROVED_AT", "DELETED"],
   FILE_ATTACHMENTS: ["ATTACHMENT_ID", "FILE_ID", "CATEGORY", "FILE_NAME", "FILE_TYPE", "FILE_SIZE", "UPLOADED_BY", "UPLOADED_AT"],
   AUDIT_LOGS: ["LOG_ID", "USER_ID", "ROLE", "ACTION", "FILE_ID", "RM_CODE", "TIMESTAMP", "DETAILS"],
@@ -147,7 +147,13 @@ function processSyncAction(action, payload, token) {
     return appendAudit(ss, logEntry);
   }
 
-  // 6. Batch Synchronization
+  // 6. Automatic App Settings Sync
+  if (action === "syncSettings") {
+    var settingsData = payload.data || payload;
+    return upsertSettings(ss, settingsData);
+  }
+
+  // 7. Batch Synchronization
   if (action === "batchSync") {
     var files = payload.files || [];
     var rms = payload.rms || [];
@@ -337,7 +343,10 @@ function upsertRM(ss, rm) {
     rm.accountStatus || "Active",
     rm.createdAt || new Date().toISOString(),
     rm.lastLogin || "",
-    rm.authUid || ""
+    rm.authUid || "",
+    rm.role || "RM",
+    rm.theme || "navy",
+    rm.preferences || ""
   ];
 
   var lastRow = sheet.getLastRow();
@@ -354,6 +363,39 @@ function upsertRM(ss, rm) {
 
   sheet.appendRow(rowData);
   return { success: true, action: "inserted", rmCode: rm.rmCode };
+}
+
+function upsertSettings(ss, settingsData) {
+  var sheet = ss.getSheetByName(SHEETS.APP_SETTINGS);
+  if (!sheet) {
+    initSpreadsheetStructure();
+    sheet = ss.getSheetByName(SHEETS.APP_SETTINGS);
+  }
+
+  var now = new Date().toISOString();
+  var updatedBy = settingsData.updatedBy || "System";
+  var keys = Object.keys(settingsData);
+  var lastRow = sheet.getLastRow();
+  var existingMap = {};
+
+  if (lastRow > 1) {
+    var existingKeys = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+    for (var i = 0; i < existingKeys.length; i++) {
+      existingMap[String(existingKeys[i][0]).trim()] = i + 2;
+    }
+  }
+
+  keys.forEach(function(key) {
+    if (key === "updatedBy") return;
+    var val = typeof settingsData[key] === "object" ? JSON.stringify(settingsData[key]) : String(settingsData[key]);
+    if (existingMap[key]) {
+      sheet.getRange(existingMap[key], 1, 1, 4).setValues([[key, val, updatedBy, now]]);
+    } else {
+      sheet.appendRow([key, val, updatedBy, now]);
+    }
+  });
+
+  return { success: true, message: "Settings synced to App_Settings sheet" };
 }
 
 function upsertAttachment(ss, att) {

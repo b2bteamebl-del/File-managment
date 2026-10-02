@@ -51,7 +51,7 @@ export const SettingsPage: React.FC = () => {
   const [newPendingDoc, setNewPendingDoc] = useState('');
 
   // RM & Personal Preferences (Font size, language, font style, theme color, profile picture)
-  const [userPrefs, setUserPrefs] = useState<UserDisplayPreferences>(() => getUserPreferences(user?.username));
+  const [userPrefs, setUserPrefs] = useState<UserDisplayPreferences>(() => getUserPreferences(user));
   const [prefSaveSuccess, setPrefSaveSuccess] = useState(false);
 
   // Auto extract spreadsheet ID from link if user pastes full URL
@@ -69,7 +69,10 @@ export const SettingsPage: React.FC = () => {
   useEffect(() => {
     async function load() {
       try {
-        const data = await api.getSettings();
+        const [data, remotePrefRes] = await Promise.all([
+          api.getSettings(),
+          api.getUserPreferences().catch(() => ({ preferences: {} })),
+        ]);
         setSettings(data);
         setAppName(data.appName || 'RM File Management & Team Member Data System');
         setTeamName(data.teamName || 'Team Member Data Management System');
@@ -78,6 +81,12 @@ export const SettingsPage: React.FC = () => {
         setProductTypes(data.productTypes || []);
         setPendingDocOptions(data.pendingDocOptions || []);
         setReportingWeekStart(data.reportingWeekStart || 'Saturday');
+
+        if (remotePrefRes?.preferences && Object.keys(remotePrefRes.preferences).length > 0) {
+          setUserPrefs(prev => ({ ...prev, ...remotePrefRes.preferences }));
+        } else if (user?.preferences) {
+          setUserPrefs(prev => ({ ...prev, ...user.preferences }));
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -85,7 +94,7 @@ export const SettingsPage: React.FC = () => {
       }
     }
     load();
-  }, []);
+  }, [user]);
 
   const handleSave = async () => {
     if (user?.role === 'RM') return;
@@ -116,9 +125,14 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  const handleSavePreferences = () => {
+  const handleSavePreferences = async () => {
     if (!user?.username) return;
     saveUserPreferences(user.username, userPrefs);
+    try {
+      await api.saveUserPreferences(userPrefs);
+    } catch (e) {
+      console.warn('Preferences save note:', e);
+    }
     setPrefSaveSuccess(true);
     setTimeout(() => setPrefSaveSuccess(false), 3000);
   };

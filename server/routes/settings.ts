@@ -1,6 +1,7 @@
 import { Router, Response } from 'express';
 import { db } from '../db.js';
 import { requireAuth, requireAdminOrMentor, AuthenticatedRequest } from '../middleware/auth.js';
+import { SheetsSyncService } from '../sheetsSync.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -60,13 +61,16 @@ router.put('/', requireAdminOrMentor, (req: AuthenticatedRequest, res: Response)
 
   const updated = db.updateSettings(updates);
 
-  db.addAuditLog({
+  const auditLog = db.addAuditLog({
     userId: user.id,
     username: user.username,
     role: user.role,
     action: 'UPDATE',
     details: `Updated application settings and dropdown configurations`,
   });
+
+  SheetsSyncService.syncSettings(updated).catch(e => console.warn('[Auto-Sync] Settings sheet sync:', e));
+  SheetsSyncService.syncAuditLog(auditLog).catch(e => console.warn('[Auto-Sync] Audit sheet sync:', e));
 
   return res.json(updated);
 });

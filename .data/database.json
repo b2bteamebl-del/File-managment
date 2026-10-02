@@ -26,7 +26,7 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-10-02T07:27:11.101Z",
+      "lastLogin": "2026-10-02T08:58:12.325Z",
       "preferences": {
         "themeColor": "emerald",
         "fontSize": "medium",
@@ -101,13 +101,14 @@
       "cpvRemarks": "Office verified in person. Customer is Senior GM.",
       "cpvLastUpdatedBy": "Admin0",
       "createdAt": "2026-09-18T10:30:00+06:00",
-      "updatedAt": "2026-09-29T12:17:11.072Z",
+      "updatedAt": "2026-10-02T08:58:05.990Z",
       "createdBy": "104393",
       "updatedBy": "Admin0",
       "submittedAt": "2026-09-19T11:00:00+06:00",
       "approvedAt": "2026-09-22T14:15:00+06:00",
       "isDeleted": false,
-      "sheetsSyncStatus": "Pending"
+      "sheetsSyncStatus": "Synced",
+      "sheetsSyncedAt": "2026-10-02T08:58:05.990Z"
     },
     {
       "fileId": "EBL-2026-00102",
@@ -128,13 +129,14 @@
       "remarks": "Admin Note: Updated with urgent query.",
       "cpvStatus": "Pending",
       "createdAt": "2026-09-24T09:00:00+06:00",
-      "updatedAt": "2026-09-29T12:12:11.443Z",
+      "updatedAt": "2026-10-02T08:58:05.990Z",
       "createdBy": "104393",
       "updatedBy": "Admin0",
       "submittedAt": "2026-09-24T09:30:00+06:00",
       "isDeleted": false,
-      "sheetsSyncStatus": "Pending",
-      "cpvLastUpdatedBy": "Admin0"
+      "sheetsSyncStatus": "Synced",
+      "cpvLastUpdatedBy": "Admin0",
+      "sheetsSyncedAt": "2026-10-02T08:58:05.990Z"
     },
     {
       "fileId": "EBL-2026-00103",
@@ -157,12 +159,13 @@
       "cpvAddress": "House 6, Road 137, Gulshan-1, Dhaka-1212",
       "cpvRemarks": "Business outlet confirmed.",
       "createdAt": "2026-09-21T11:45:00+06:00",
-      "updatedAt": "2026-09-23T16:20:00+06:00",
+      "updatedAt": "2026-10-02T08:58:05.991Z",
       "createdBy": "104393",
       "updatedBy": "Admin0",
       "submittedAt": "2026-09-21T15:00:00+06:00",
       "isDeleted": false,
-      "sheetsSyncStatus": "Pending"
+      "sheetsSyncStatus": "Synced",
+      "sheetsSyncedAt": "2026-10-02T08:58:05.990Z"
     },
     {
       "fileId": "EBL-2026-00104",
@@ -179,13 +182,14 @@
       "remarks": "Limit enhanced from 300K to 600K BDT based on excellent credit turnover.",
       "cpvStatus": "Not Required",
       "createdAt": "2026-09-15T14:10:00+06:00",
-      "updatedAt": "2026-09-18T10:00:00+06:00",
+      "updatedAt": "2026-10-02T08:58:05.991Z",
       "createdBy": "105210",
       "updatedBy": "105210",
       "submittedAt": "2026-09-15T16:00:00+06:00",
       "approvedAt": "2026-09-18T10:00:00+06:00",
       "isDeleted": false,
-      "sheetsSyncStatus": "Pending"
+      "sheetsSyncStatus": "Synced",
+      "sheetsSyncedAt": "2026-10-02T08:58:05.990Z"
     },
     {
       "fileId": "EBL-2026-00105",
@@ -207,12 +211,13 @@
       "cpvAddress": "Bashundhara R/A, Dhaka",
       "cpvRemarks": "Residence & Office confirmed.",
       "createdAt": "2026-09-22T09:30:00+06:00",
-      "updatedAt": "2026-09-25T11:00:00+06:00",
+      "updatedAt": "2026-10-02T08:58:05.992Z",
       "createdBy": "105210",
       "updatedBy": "105210",
       "submittedAt": "2026-09-22T14:00:00+06:00",
       "isDeleted": false,
-      "sheetsSyncStatus": "Pending"
+      "sheetsSyncStatus": "Synced",
+      "sheetsSyncedAt": "2026-10-02T08:58:05.990Z"
     },
     {
       "fileId": "EBL-2026-00106",
@@ -231,16 +236,44 @@
       "remarks": "Primary credit card split application processed.",
       "cpvStatus": "Not Required",
       "createdAt": "2026-09-25T11:15:00+06:00",
-      "updatedAt": "2026-09-25T11:15:00+06:00",
+      "updatedAt": "2026-10-02T08:58:05.992Z",
       "createdBy": "106880",
       "updatedBy": "106880",
       "submittedAt": "2026-09-25T11:15:00+06:00",
       "isDeleted": false,
-      "sheetsSyncStatus": "Pending"
+      "sheetsSyncStatus": "Synced",
+      "sheetsSyncedAt": "2026-10-02T08:58:05.990Z"
     }
   ],
   "attachments": [],
   "auditLogs": [
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1790931492326_3lufv",
+      "timestamp": "2026-10-02T08:58:12.326Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1790931470631_445sf",
+      "timestamp": "2026-10-02T08:57:50.631Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "EXPORT",
+      "details": "Exported 6 records in format XLSX",
+      "id": "log_1790927407815_9ex0c",
+      "timestamp": "2026-10-02T07:50:07.815Z"
+    },
     {
       "userId": "usr_mentor12345",
       "username": "12345",
@@ -731,14 +764,16 @@
     ],
     "reportingWeekStart": "Saturday",
     "googleSpreadsheetId": "1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI",
-    "appsScriptWebAppUrl": "",
+    "appsScriptWebAppUrl": "https://script.google.com/macros/s/AKfycbzVZIYYDfvj25AXPykT8yOZtqKcA-ExkkO-mZxa42DmRNPb79i2gad_phqykp2JNEY5/exec",
     "appsScriptSecretToken": "EBL_RM_SYNC_2026_SECURE_TOKEN_#99",
     "syncIntervalMinutes": 5,
-    "lastSyncStatus": "Idle",
+    "lastSyncStatus": "Success",
     "updatedBy": "12345",
-    "updatedAt": "2026-10-02T06:56:01.683Z",
+    "updatedAt": "2026-10-02T08:58:05.992Z",
     "appName": "B2B team",
-    "teamName": "Data Management System"
+    "teamName": "Data Management System",
+    "lastSyncAttempt": "2026-10-02T08:57:50.652Z",
+    "lastSuccessfulSync": "2026-10-02T08:58:05.990Z"
   },
   "notifications": [
     {

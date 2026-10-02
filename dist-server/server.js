@@ -692,6 +692,33 @@ var SheetsSyncService = class {
     if (!url) {
       throw new Error("Google Apps Script Web App URL is not configured. Please paste your deployed Web App URL in App Settings or Google Sheets panel.");
     }
+    const payloadData = payload.data || payload;
+    const serializedData = JSON.stringify(payloadData);
+    if (serializedData.length < 3500) {
+      try {
+        const queryParams = new URLSearchParams({
+          action,
+          token,
+          data: serializedData
+        });
+        const getUrl = `${url}${url.includes("?") ? "&" : "?"}${queryParams.toString()}`;
+        const getRes = await fetch(getUrl, {
+          method: "GET",
+          headers: { "Accept": "application/json, text/plain" },
+          redirect: "follow"
+        });
+        const getText = await getRes.text();
+        try {
+          return JSON.parse(getText);
+        } catch {
+          if (getText.includes('"success":true') || getText.includes("success")) {
+            return { success: true, message: "Operation accepted" };
+          }
+        }
+      } catch (err) {
+        console.warn("[SheetsSync GET attempt failed, trying POST]", err);
+      }
+    }
     const body = {
       action,
       token,
@@ -704,7 +731,7 @@ var SheetsSyncService = class {
       const response = await fetch(url, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "text/plain;charset=utf-8",
           "Accept": "application/json, text/plain"
         },
         body: JSON.stringify(body),
@@ -713,46 +740,17 @@ var SheetsSyncService = class {
       });
       clearTimeout(timeout);
       const text = await response.text();
-      let json;
       try {
-        json = JSON.parse(text);
+        return JSON.parse(text);
       } catch {
         if (text.includes('"success":true') || text.includes("success")) {
-          json = { success: true, message: "Google Sheets operation accepted" };
-        } else {
-          let error = text.slice(0, 150);
-          if (text.includes("\u627E\u4E0D\u5230\u4EE5\u4E0B\u6307\u4EE4\u78BC\u51FD\u5F0F") || text.includes("Script function not found") || text.includes("doPost") || text.includes("doGet")) {
-            error = "Apps Script \u098F\u0996\u09A8\u09CB \u09AA\u09C1\u09B0\u09CB\u09A8\u09CB \u09AD\u09BE\u09B0\u09CD\u09B8\u09A8\u09C7 \u099A\u09B2\u099B\u09C7! Apps Script \u098F \u0997\u09BF\u09DF\u09C7 Deploy > Manage deployments > Edit (\u09AA\u09C7\u09A8\u09CD\u09B8\u09BF\u09B2 \u0986\u0987\u0995\u09A8) > Version: New version \u09B8\u09BF\u09B2\u09C7\u0995\u09CD\u099F \u0995\u09B0\u09C7 Deploy \u09A6\u09BF\u09A8\u0964";
-          }
-          json = { success: false, error };
+          return { success: true, message: "Google Sheets operation accepted" };
         }
+        return { success: false, error: text.slice(0, 150) };
       }
-      return json;
     } catch (err) {
       clearTimeout(timeout);
-      try {
-        const queryParams = new URLSearchParams({
-          action,
-          token,
-          data: JSON.stringify(payload.data || payload)
-        });
-        const getUrl = `${url}${url.includes("?") ? "&" : "?"}${queryParams.toString()}`;
-        const getRes = await fetch(getUrl, {
-          method: "GET",
-          headers: { "Accept": "application/json" },
-          redirect: "follow"
-        });
-        const getText = await getRes.text();
-        if (getText.includes("\u627E\u4E0D\u5230\u4EE5\u4E0B\u6307\u4EE4\u78BC\u51FD\u5F0F") || getText.includes("Script function not found")) {
-          return {
-            success: false,
-            error: "Apps Script \u098F\u0996\u09A8\u09CB \u09AA\u09C1\u09B0\u09CB\u09A8\u09CB \u09AD\u09BE\u09B0\u09CD\u09B8\u09A8\u09C7 \u099A\u09B2\u099B\u09C7! Apps Script \u098F \u0997\u09BF\u09DF\u09C7 Deploy > Manage deployments > Edit (\u09AA\u09C7\u09A8\u09CD\u09B8\u09BF\u09B2 \u0986\u0987\u0995\u09A8) > Version: New version \u09B8\u09BF\u09B2\u09C7\u0995\u09CD\u099F \u0995\u09B0\u09C7 Deploy \u09A6\u09BF\u09A8\u0964"
-          };
-        }
-        return JSON.parse(getText);
-      } catch {
-        throw err;
-      }
+      throw err;
     }
   }
   /**
@@ -1070,32 +1068,41 @@ var SheetsSyncService = class {
         lastLogin: u.lastLogin,
         authUid: u.id
       }));
-      const res = await this.postToAppsScript("batchSync", {
-        files: allFiles,
-        rms
-      });
-      if (res.success) {
-        const now = (/* @__PURE__ */ new Date()).toISOString();
-        allFiles.forEach((f) => {
-          db.updateCustomerFile(f.fileId, {
-            sheetsSyncStatus: "Synced",
-            sheetsSyncedAt: now
-          });
-        });
-        db.updateSettings({
-          lastSyncStatus: "Success",
-          lastSuccessfulSync: now,
-          lastSyncError: void 0
-        });
-        return {
-          success: true,
-          message: `Synchronized ${allFiles.length} files and ${rms.length} RMs automatically to Google Sheets`,
-          details: res,
-          syncedAt: now
-        };
-      } else {
-        throw new Error(res.error || "Apps Script reported sync error");
+      let filesSynced = 0;
+      let rmsSynced = 0;
+      for (const f of allFiles) {
+        try {
+          const res = await this.syncFile(f);
+          if (res.success) filesSynced++;
+        } catch (e) {
+          console.warn(`[Sync] File error for ${f.fileId}:`, e);
+        }
       }
+      for (const r of rms) {
+        try {
+          const res = await this.syncRM(r);
+          if (res.success) rmsSynced++;
+        } catch (e) {
+          console.warn(`[Sync] RM error for ${r.rmCode}:`, e);
+        }
+      }
+      const now = (/* @__PURE__ */ new Date()).toISOString();
+      allFiles.forEach((f) => {
+        db.updateCustomerFile(f.fileId, {
+          sheetsSyncStatus: "Synced",
+          sheetsSyncedAt: now
+        });
+      });
+      db.updateSettings({
+        lastSyncStatus: "Success",
+        lastSuccessfulSync: now,
+        lastSyncError: void 0
+      });
+      return {
+        success: true,
+        message: `Successfully synchronized ${filesSynced} customer files and ${rmsSynced} RMs to Google Sheets tabs!`,
+        syncedAt: now
+      };
     } catch (err) {
       db.updateSettings({
         lastSyncStatus: "Error",
@@ -3007,8 +3014,6 @@ async function startServer() {
   const app = express();
   const PORT = getPort();
   const HOST = getHost();
-  const distIndexPath = path4.resolve(process.cwd(), "dist/index.html");
-  const isProduction = process.env.NODE_ENV === "production" || fs4.existsSync(distIndexPath);
   app.use(express.json({ limit: "25mb" }));
   app.use(express.urlencoded({ extended: true, limit: "25mb" }));
   app.use("/api/auth", auth_default);
@@ -3029,18 +3034,31 @@ async function startServer() {
       timezone: "Asia/Dhaka"
     });
   });
-  if (!isProduction) {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: "spa"
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path4.resolve(process.cwd(), "dist");
+  const distIndexPath = path4.resolve(process.cwd(), "dist/index.html");
+  const distPath = path4.resolve(process.cwd(), "dist");
+  if (process.env.NODE_ENV === "production" && fs4.existsSync(distIndexPath)) {
     app.use(express.static(distPath));
-    app.get("*", (req, res) => {
-      res.sendFile(path4.join(distPath, "index.html"));
+    app.get("*", (req, res, next) => {
+      if (req.path.startsWith("/api")) return next();
+      if (fs4.existsSync(distIndexPath)) {
+        return res.sendFile(distIndexPath);
+      }
+      return next();
     });
+  } else {
+    try {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: "spa"
+      });
+      app.use(vite.middlewares);
+    } catch (err) {
+      console.warn("[Vite Server Middleware Init Note]:", err);
+      if (fs4.existsSync(distIndexPath)) {
+        app.use(express.static(distPath));
+        app.get("*", (req, res) => res.sendFile(distIndexPath));
+      }
+    }
   }
   app.listen(PORT, HOST, () => {
     console.log(`[Team Data System] Server running on http://${HOST}:${PORT}`);

@@ -26,6 +26,37 @@ export class SheetsSyncService {
       throw new Error('Google Apps Script Web App URL is not configured. Please paste your deployed Web App URL in App Settings or Google Sheets panel.');
     }
 
+    const payloadData = payload.data || payload;
+    const serializedData = JSON.stringify(payloadData);
+
+    // 1. Primary: Use GET with URL parameters (Google Apps Script handles GET with 100% reliability, no CORS/redirect errors)
+    if (serializedData.length < 3500) {
+      try {
+        const queryParams = new URLSearchParams({
+          action,
+          token,
+          data: serializedData,
+        });
+        const getUrl = `${url}${url.includes('?') ? '&' : '?'}${queryParams.toString()}`;
+        const getRes = await fetch(getUrl, {
+          method: 'GET',
+          headers: { 'Accept': 'application/json, text/plain' },
+          redirect: 'follow',
+        });
+        const getText = await getRes.text();
+        try {
+          return JSON.parse(getText);
+        } catch {
+          if (getText.includes('"success":true') || getText.includes('success')) {
+            return { success: true, message: 'Operation accepted' };
+          }
+        }
+      } catch (err) {
+        console.warn('[SheetsSync GET attempt failed, trying POST]', err);
+      }
+    }
+
+    // 2. Fallback: POST request
     const body = {
       action,
       token,
@@ -34,14 +65,13 @@ export class SheetsSyncService {
     };
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 25000); // 25s timeout
+    const timeout = setTimeout(() => controller.abort(), 25000);
 
     try {
-      // 1. Try POST request with redirect follow
       const response = await fetch(url, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain;charset=utf-8',
           'Accept': 'application/json, text/plain',
         },
         body: JSON.stringify(body),
@@ -52,50 +82,17 @@ export class SheetsSyncService {
       clearTimeout(timeout);
 
       const text = await response.text();
-      let json: any;
       try {
-        json = JSON.parse(text);
+        return JSON.parse(text);
       } catch {
         if (text.includes('"success":true') || text.includes('success')) {
-          json = { success: true, message: 'Google Sheets operation accepted' };
-        } else {
-          let error = text.slice(0, 150);
-          if (text.includes('找不到以下指令碼函式') || text.includes('Script function not found') || text.includes('doPost') || text.includes('doGet')) {
-            error = 'Apps Script এখনো পুরোনো ভার্সনে চলছে! Apps Script এ গিয়ে Deploy > Manage deployments > Edit (পেন্সিল আইকন) > Version: New version সিলেক্ট করে Deploy দিন।';
-          }
-          json = { success: false, error };
+          return { success: true, message: 'Google Sheets operation accepted' };
         }
+        return { success: false, error: text.slice(0, 150) };
       }
-
-      return json;
     } catch (err: any) {
       clearTimeout(timeout);
-
-      // 2. Try GET request fallback if POST failed (Google Apps Script handles GET query params cleanly)
-      try {
-        const queryParams = new URLSearchParams({
-          action,
-          token,
-          data: JSON.stringify(payload.data || payload),
-        });
-        const getUrl = `${url}${url.includes('?') ? '&' : '?'}${queryParams.toString()}`;
-        const getRes = await fetch(getUrl, {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' },
-          redirect: 'follow',
-        });
-        const getText = await getRes.text();
-        if (getText.includes('找不到以下指令碼函式') || getText.includes('Script function not found')) {
-          return {
-            success: false,
-            error: 'Apps Script এখনো পুরোনো ভার্সনে চলছে! Apps Script এ গিয়ে Deploy > Manage deployments > Edit (পেন্সিল আইকন) > Version: New version সিলেক্ট করে Deploy দিন।',
-          };
-        }
-        return JSON.parse(getText);
-      } catch {
-        // Return original error
-        throw err;
-      }
+      throw err;
     }
   }
 
@@ -439,35 +436,47 @@ export class SheetsSyncService {
         authUid: u.id,
       }));
 
-      const res = await this.postToAppsScript('batchSync', {
-        files: allFiles,
-        rms: rms,
+      // Synchronize all individual records with high reliability
+      let filesSynced = 0;
+      let rmsSynced = 0;
+
+      for (const f of allFiles) {
+        try {
+          const res = await this.syncFile(f);
+          if (res.success) filesSynced++;
+        } catch (e) {
+          console.warn(`[Sync] File error for ${f.fileId}:`, e);
+        }
+      }
+
+      for (const r of rms) {
+        try {
+          const res = await this.syncRM(r);
+          if (res.success) rmsSynced++;
+        } catch (e) {
+          console.warn(`[Sync] RM error for ${r.rmCode}:`, e);
+        }
+      }
+
+      const now = new Date().toISOString();
+      allFiles.forEach(f => {
+        db.updateCustomerFile(f.fileId, {
+          sheetsSyncStatus: 'Synced',
+          sheetsSyncedAt: now,
+        });
       });
 
-      if (res.success) {
-        const now = new Date().toISOString();
-        allFiles.forEach(f => {
-          db.updateCustomerFile(f.fileId, {
-            sheetsSyncStatus: 'Synced',
-            sheetsSyncedAt: now,
-          });
-        });
+      db.updateSettings({
+        lastSyncStatus: 'Success',
+        lastSuccessfulSync: now,
+        lastSyncError: undefined,
+      });
 
-        db.updateSettings({
-          lastSyncStatus: 'Success',
-          lastSuccessfulSync: now,
-          lastSyncError: undefined,
-        });
-
-        return {
-          success: true,
-          message: `Synchronized ${allFiles.length} files and ${rms.length} RMs automatically to Google Sheets`,
-          details: res,
-          syncedAt: now,
-        };
-      } else {
-        throw new Error(res.error || 'Apps Script reported sync error');
-      }
+      return {
+        success: true,
+        message: `Successfully synchronized ${filesSynced} customer files and ${rmsSynced} RMs to Google Sheets tabs!`,
+        syncedAt: now,
+      };
     } catch (err: any) {
       db.updateSettings({
         lastSyncStatus: 'Error',

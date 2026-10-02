@@ -45,10 +45,28 @@ var HEADERS = {
 
 function getSpreadsheet() {
   try {
+    var active = SpreadsheetApp.getActiveSpreadsheet();
+    if (active) return active;
+  } catch (err) {}
+
+  try {
     return SpreadsheetApp.openById(SPREADSHEET_ID);
   } catch (e) {
-    return SpreadsheetApp.getActiveSpreadsheet();
+    throw new Error("Cannot access spreadsheet. Please ensure the script is opened via Extensions > Apps Script in your Google Sheet.");
   }
+}
+
+/**
+ * Run this function inside Apps Script by selecting "testRun" and clicking Run (▶).
+ * This triggers the one-time Google "Authorization Required" permission popup:
+ * (Review Permissions -> Choose Account -> Advanced -> Go to (unsafe) -> Allow).
+ */
+function testRun() {
+  var ss = getSpreadsheet();
+  var log = initSpreadsheetStructure();
+  Logger.log("Connected to: " + ss.getName());
+  Logger.log("Init Log: " + JSON.stringify(log));
+  return "SUCCESS: Connected to " + ss.getName();
 }
 
 /**

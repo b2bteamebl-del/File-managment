@@ -34,8 +34,6 @@ export async function startServer() {
   const app = express();
   const PORT = getPort();
   const HOST = getHost();
-  const distIndexPath = path.resolve(process.cwd(), 'dist/index.html');
-  const isProduction = process.env.NODE_ENV === 'production' || fs.existsSync(distIndexPath);
 
   // Body parsers with generous limit for document/image attachments (10MB binary is ~14MB base64)
   app.use(express.json({ limit: '25mb' }));
@@ -64,18 +62,33 @@ export async function startServer() {
   });
 
   // Frontend integration
-  if (!isProduction) {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
-  } else {
-    const distPath = path.resolve(process.cwd(), 'dist');
+  const distIndexPath = path.resolve(process.cwd(), 'dist/index.html');
+  const distPath = path.resolve(process.cwd(), 'dist');
+
+  if (process.env.NODE_ENV === 'production' && fs.existsSync(distIndexPath)) {
     app.use(express.static(distPath));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api')) return next();
+      if (fs.existsSync(distIndexPath)) {
+        return res.sendFile(distIndexPath);
+      }
+      return next();
     });
+  } else {
+    // Development or fallback: Mount Vite in middleware mode
+    try {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+    } catch (err) {
+      console.warn('[Vite Server Middleware Init Note]:', err);
+      if (fs.existsSync(distIndexPath)) {
+        app.use(express.static(distPath));
+        app.get('*', (req, res) => res.sendFile(distIndexPath));
+      }
+    }
   }
 
   app.listen(PORT, HOST, () => {

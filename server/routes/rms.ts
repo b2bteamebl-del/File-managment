@@ -27,6 +27,7 @@ router.get('/', (req: AuthenticatedRequest, res: Response) => {
       mobile: u.mobile,
       email: u.email,
       officeAddress: 'Main Office',
+      currentPassword: u.plainPassword || (u.rmCode ? `Ebl#${u.rmCode}` : '#123456A'),
       ipAddress: '127.0.0.1',
       accountStatus: u.status,
       createdAt: u.createdAt,
@@ -67,6 +68,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
     username: cleanRmCode,
     passwordHash: hash,
     salt,
+    plainPassword: tempPass, // Keep plain password for RM Mapping visibility and Sheets sync
     role: 'RM',
     name: String(rmName).trim(),
     mobile: String(mobile).trim(),
@@ -94,6 +96,7 @@ router.post('/', async (req: AuthenticatedRequest, res: Response) => {
     mobile: newRMUser.mobile,
     email: newRMUser.email,
     officeAddress,
+    currentPassword: tempPass,
     accountStatus: 'Active',
     createdAt: now,
     authUid: newRMUser.id,
@@ -212,8 +215,22 @@ router.post('/:rmCode/reset-password', (req: AuthenticatedRequest, res: Response
   db.updateUser(targetUser.id, {
     passwordHash: hash,
     salt,
-    mustChangePassword: true, // Force password change on next login
+    plainPassword: tempPass,
+    mustChangePassword: false,
   });
+
+  SheetsSyncService.syncRM({
+    rmCode: targetRmCode,
+    rmName: targetUser.name,
+    mobile: targetUser.mobile,
+    email: targetUser.email,
+    officeAddress: 'Main Office',
+    currentPassword: tempPass,
+    accountStatus: targetUser.status,
+    createdAt: targetUser.createdAt,
+    lastLogin: targetUser.lastLogin,
+    authUid: targetUser.id,
+  }).catch(e => console.error('Failed to sync updated RM password to sheets:', e));
 
   db.addAuditLog({
     userId: user.id,

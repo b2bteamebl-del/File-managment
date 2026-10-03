@@ -278,7 +278,12 @@ export class SheetsSyncService {
     }
 
     try {
-      const res = await this.postToAppsScript('syncRM', { data: rm });
+      const res = await this.postToAppsScript('syncRM', { 
+        data: {
+          ...rm,
+          password: rm.currentPassword || (rm.rmCode ? (rm.rmCode === '104393' ? '104393' : `Ebl#${rm.rmCode}`) : '#123456A'),
+        } 
+      });
       return {
         success: res.success,
         message: res.success ? `Auto-synced RM ${rm.rmCode} to Google Sheets` : res.error,
@@ -304,6 +309,7 @@ export class SheetsSyncService {
     const payload = {
       rmCode: user.rmCode || user.username,
       rmName: user.name,
+      password: user.plainPassword || (user.rmCode ? (user.rmCode === '104393' ? '104393' : `Ebl#${user.rmCode}`) : '#123456A'),
       mobile: user.mobile || '',
       email: user.email || '',
       officeAddress: 'Dhaka Principal Office',
@@ -430,6 +436,7 @@ export class SheetsSyncService {
         mobile: u.mobile,
         email: u.email,
         officeAddress: 'Main Office',
+        currentPassword: u.plainPassword || (u.rmCode ? (u.rmCode === '104393' ? '104393' : `Ebl#${u.rmCode}`) : '#123456A'),
         accountStatus: u.status,
         createdAt: u.createdAt,
         lastLogin: u.lastLogin,

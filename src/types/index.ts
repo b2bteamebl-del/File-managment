@@ -105,6 +105,7 @@ export interface RMProfile {
   mobile: string;
   email: string;
   officeAddress: string;
+  currentPassword?: string; // Visible in RM Mapping and synced with Google Sheets
   ipAddress?: string;
   accountStatus: 'Active' | 'Inactive' | 'Suspended';
   createdAt: string;

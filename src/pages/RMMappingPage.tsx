@@ -14,7 +14,10 @@ import {
   ShieldCheck,
   Check,
   X,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Eye,
+  EyeOff,
+  Copy
 } from 'lucide-react';
 import { api } from '../lib/api.js';
 import { RMProfile } from '../types/index.js';
@@ -40,6 +43,26 @@ export const RMMappingPage: React.FC = () => {
   // Password reset popup
   const [resetModalData, setResetModalData] = useState<{ rmCode: string; tempPass: string } | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
+  // Password visibility and direct editing
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
+  const [copiedRmCode, setCopiedRmCode] = useState<string | null>(null);
+  const [changePasswordRM, setChangePasswordRM] = useState<RMProfile | null>(null);
+  const [newRMDirectPassword, setNewRMDirectPassword] = useState('');
+
+  const handleChangePasswordDirect = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!changePasswordRM || !newRMDirectPassword.trim()) return;
+    try {
+      await api.resetRMPassword(changePasswordRM.rmCode, newRMDirectPassword.trim());
+      setStatusMessage(`RM ${changePasswordRM.rmCode} এর পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে এবং শিটে সিঙ্ক হয়েছে!`);
+      setChangePasswordRM(null);
+      setNewRMDirectPassword('');
+      fetchRMs();
+    } catch (err: any) {
+      alert(err.message || 'পাসওয়ার্ড পরিবর্তন ব্যর্থ হয়েছে');
+    }
+  };
 
   const fetchRMs = async () => {
     setIsLoading(true);
@@ -253,6 +276,7 @@ export const RMMappingPage: React.FC = () => {
               <tr>
                 <th className="py-3 px-3">RM Code</th>
                 <th className="py-3 px-3">Officer Name</th>
+                <th className="py-3 px-3">Password (পাসওয়ার্ড)</th>
                 <th className="py-3 px-3">Contact Mobile</th>
                 <th className="py-3 px-3">Official Email</th>
                 <th className="py-3 px-2 text-center">Status</th>
@@ -266,7 +290,7 @@ export const RMMappingPage: React.FC = () => {
             <tbody className="divide-y divide-slate-200">
               {filteredRMs.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="py-10 text-center text-slate-400">
+                  <td colSpan={11} className="py-10 text-center text-slate-400">
                     No RM mapping profiles found.
                   </td>
                 </tr>
@@ -278,6 +302,36 @@ export const RMMappingPage: React.FC = () => {
                     </td>
                     <td className="py-3 px-3 font-semibold text-slate-900 whitespace-nowrap">
                       {rm.rmName}
+                    </td>
+                    <td className="py-3 px-3 whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1.5 font-mono text-[11px] bg-slate-50 hover:bg-slate-100 py-1 px-2.5 rounded-lg border border-slate-200 shadow-2xs">
+                        <Key className="w-3 h-3 text-amber-600 shrink-0" />
+                        <span className="font-semibold text-slate-800 tracking-wider">
+                          {visiblePasswords[rm.rmCode] ? (rm.currentPassword || '••••••••') : '••••••••'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setVisiblePasswords(prev => ({ ...prev, [rm.rmCode]: !prev[rm.rmCode] }))}
+                          className="text-slate-400 hover:text-slate-700 ml-1 cursor-pointer transition"
+                          title={visiblePasswords[rm.rmCode] ? 'Hide Password' : 'Show Password'}
+                        >
+                          {visiblePasswords[rm.rmCode] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (rm.currentPassword) {
+                              navigator.clipboard.writeText(rm.currentPassword);
+                              setCopiedRmCode(rm.rmCode);
+                              setTimeout(() => setCopiedRmCode(null), 2000);
+                            }
+                          }}
+                          className="text-blue-600 hover:text-blue-800 cursor-pointer transition"
+                          title="Copy Password"
+                        >
+                          {copiedRmCode === rm.rmCode ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
                     </td>
                     <td className="py-3 px-3 font-mono text-slate-600 whitespace-nowrap">
                       {rm.mobile}
@@ -303,12 +357,24 @@ export const RMMappingPage: React.FC = () => {
                       {rm.lastLogin ? formatDhakaDateTime(rm.lastLogin) : 'Never'}
                     </td>
                     <td className="py-3 px-3 text-right whitespace-nowrap space-x-1">
+                      {/* Set / Change Password */}
+                      <button
+                        onClick={() => {
+                          setChangePasswordRM(rm);
+                          setNewRMDirectPassword(rm.currentPassword || '');
+                        }}
+                        className="px-2 py-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 rounded text-[11px] font-semibold transition cursor-pointer"
+                        title="Change Password"
+                      >
+                        পাসওয়ার্ড
+                      </button>
+
                       {/* Toggle status */}
                       <button
                         onClick={() => handleToggleStatus(rm.rmCode, rm.accountStatus)}
-                        className={`px-2 py-1 rounded text-[11px] font-semibold transition ${
+                        className={`px-2 py-1 rounded text-[11px] font-semibold transition cursor-pointer ${
                           rm.accountStatus === 'Active'
-                            ? 'bg-amber-50 hover:bg-amber-100 text-amber-800'
+                            ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                             : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800'
                         }`}
                         title="Toggle Active/Inactive"
@@ -322,7 +388,7 @@ export const RMMappingPage: React.FC = () => {
                           setEditingRM(rm);
                           setIsEditModalOpen(true);
                         }}
-                        className="p-1 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded"
+                        className="p-1 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded cursor-pointer"
                         title="Edit RM Details"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
@@ -546,6 +612,66 @@ export const RMMappingPage: React.FC = () => {
             >
               I Have Recorded the Temporary Password
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* DIRECT CHANGE PASSWORD MODAL */}
+      {changePasswordRM && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full overflow-hidden animate-in zoom-in-95">
+            <div className="bg-[#0F294A] text-white px-6 py-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Key className="w-5 h-5 text-amber-400" />
+                <h3 className="font-bold text-sm">পাসওয়ার্ড পরিবর্তন: RM {changePasswordRM.rmCode}</h3>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setChangePasswordRM(null)} 
+                className="text-slate-300 hover:text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleChangePasswordDirect} className="p-6 space-y-4">
+              <div>
+                <p className="text-xs text-slate-600 mb-2">
+                  অফিসার: <strong className="text-slate-900">{changePasswordRM.rmName}</strong> (RM Code: {changePasswordRM.rmCode})
+                </p>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  নতুন পাসওয়ার্ড প্রদান করুন
+                </label>
+                <input
+                  type="text"
+                  required
+                  minLength={4}
+                  value={newRMDirectPassword}
+                  onChange={e => setNewRMDirectPassword(e.target.value)}
+                  placeholder="যেমন: 123456 বা Ebl#104393"
+                  className="w-full px-3 py-2 text-sm font-mono border border-slate-300 rounded-xl focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+                <p className="text-[11px] text-slate-500 mt-1.5">
+                  এই পাসওয়ার্ডটি সরাসরি ডাটাবেজ ও গুগল শিটের <strong>RM_Mapping</strong> ট্যাবে আপডেট হবে। RM এই পাসওয়ার্ড দিয়ে লগইন করতে পারবেন।
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setChangePasswordRM(null)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+                >
+                  বাতিল
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white rounded-xl text-xs font-bold transition shadow-md cursor-pointer"
+                >
+                  পাসওয়ার্ড সংরক্ষণ ও শিটে সিঙ্ক
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

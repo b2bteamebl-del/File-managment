@@ -20,6 +20,7 @@ export interface UserRecord {
   username: string; // RM code (e.g. "104393") or "Admin0" or "12345"
   passwordHash: string;
   salt: string;
+  plainPassword?: string; // Plain password for RM Mapping visibility and Sheets sync
   role: UserRole;
   name: string;
   email: string;

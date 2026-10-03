@@ -147,6 +147,54 @@ export const Login: React.FC = () => {
               </>
             )}
           </button>
+
+          {/* Quick Demo Access Badges */}
+          <div className="pt-3 mt-3 border-t border-white/10">
+            <p className="text-[11px] text-center text-slate-300 font-medium mb-2">
+              দ্রুত লগইন একাউন্ট (ট্যাপ করে অটো-লগইন করুন):
+            </p>
+            <div className="grid grid-cols-3 gap-1.5 text-xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername('12345');
+                  setPassword('#123456A');
+                  login('12345', '#123456A').catch(e => setError(e.message));
+                }}
+                className="py-2 px-1.5 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 rounded-xl text-center transition cursor-pointer"
+              >
+                <div className="font-bold text-amber-300 text-[11px]">Mentor</div>
+                <div className="text-[10px] text-slate-300">12345</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername('Admin0');
+                  setPassword('#123456A');
+                  login('Admin0', '#123456A').catch(e => setError(e.message));
+                }}
+                className="py-2 px-1.5 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 rounded-xl text-center transition cursor-pointer"
+              >
+                <div className="font-bold text-blue-300 text-[11px]">Admin</div>
+                <div className="text-[10px] text-slate-300">Admin0</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setUsername('104393');
+                  setPassword('104393');
+                  login('104393', '104393').catch(e => setError(e.message));
+                }}
+                className="py-2 px-1.5 bg-white/10 hover:bg-white/20 active:scale-95 border border-white/15 rounded-xl text-center transition cursor-pointer"
+              >
+                <div className="font-bold text-emerald-300 text-[11px]">RM Officer</div>
+                <div className="text-[10px] text-slate-300">104393</div>
+              </button>
+            </div>
+            <p className="text-[10px] text-center text-slate-400 mt-2.5">
+              পাসওয়ার্ড: <span className="font-mono text-white">#123456A</span> অথবা আপনার <span className="font-mono text-white">RM কোড</span>
+            </p>
+          </div>
         </form>
       </div>
     </div>

@@ -12,7 +12,8 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-10-02T06:49:36.582Z"
+      "lastLogin": "2026-10-03T10:29:05.813Z",
+      "plainPassword": "#123456A"
     },
     {
       "id": "usr_mentor12345",
@@ -26,34 +27,36 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-10-03T09:51:48.692Z",
+      "lastLogin": "2026-10-03T10:17:56.378Z",
       "preferences": {
         "themeColor": "emerald",
         "fontSize": "medium",
         "fontFamily": "siliguri",
         "language": "bn"
-      }
+      },
+      "plainPassword": "#123456A"
     },
     {
       "id": "usr_rm104393",
       "username": "104393",
-      "passwordHash": "69daf33e7dc0ee911822f2e3bf43af3611f6571f48fedc4e85a44c7f46fbf054c3326adf019e38f25a9b50a6e878a4905a0ecfc3fbf8181c08362e98c106011b",
-      "salt": "464ab3d3f0b62804bb7f948ce7b9e0b0",
+      "passwordHash": "f991f7d1491b9549bedf66874ee65236587be98507918c9b35a891f23e079e924b3ca2fa4d44167d6defd864b520c15cf652b7fdf1b75be22fc1caeb76e0209d",
+      "salt": "7d38cdf16af2356ccb7fbb98a9b5532d",
       "role": "RM",
       "name": "Tanvir Ahmed",
       "email": "tanvir.104393@ebl.com.bd",
       "mobile": "+8801819234567",
       "rmCode": "104393",
       "status": "Active",
-      "mustChangePassword": false,
+      "mustChangePassword": true,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-10-02T06:42:43.504Z"
+      "lastLogin": "2026-10-03T10:28:26.294Z",
+      "plainPassword": "104393"
     },
     {
       "id": "usr_rm105210",
       "username": "105210",
-      "passwordHash": "03b39dd814c9500c8d2caea3c2dfa416232e23897cca03891d2e11be1d2dfabcbb2ba6efbf722e4216310f2782ac59497c3e06d086b764f5d31b6612f600090b",
-      "salt": "574d23db5acb3a84861016533f797e4f",
+      "passwordHash": "096f320e6a40d30e24f9d67b6196ad8528afee4ac1eb6fa1c0f9366b124e17095497b72ea00b6c661f4e77be9cad87372dec455cbbc7b0fd448cffb276741bbc",
+      "salt": "43874b2e6dfe4f9939485b11d08a95c0",
       "role": "RM",
       "name": "Nusrat Jahan",
       "email": "nusrat.105210@ebl.com.bd",
@@ -62,7 +65,8 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-09-29T11:58:31.163Z"
+      "lastLogin": "2026-10-03T10:29:05.956Z",
+      "plainPassword": "Nusrat#9999"
     },
     {
       "id": "usr_rm106880",
@@ -76,7 +80,9 @@
       "rmCode": "106880",
       "status": "Active",
       "mustChangePassword": false,
-      "createdAt": "2026-09-27T04:45:19.303Z"
+      "createdAt": "2026-09-27T04:45:19.303Z",
+      "lastLogin": "2026-10-03T10:17:56.463Z",
+      "plainPassword": "106880"
     },
     {
       "id": "usr_rm_RM5842_e85f77",
@@ -91,7 +97,8 @@
       "status": "Active",
       "mustChangePassword": true,
       "createdAt": "2026-10-03T09:51:42.455Z",
-      "lastLogin": "2026-10-03T09:51:42.481Z"
+      "lastLogin": "2026-10-03T09:51:42.481Z",
+      "plainPassword": "Ebl#RM5842"
     }
   ],
   "customerFiles": [
@@ -285,6 +292,170 @@
   ],
   "attachments": [],
   "auditLogs": [
+    {
+      "userId": "usr_rm105210",
+      "username": "105210",
+      "role": "RM",
+      "rmCode": "105210",
+      "action": "LOGIN",
+      "details": "User 105210 (RM) logged in successfully",
+      "id": "log_1791023345956_l28oc",
+      "timestamp": "2026-10-03T10:29:05.956Z"
+    },
+    {
+      "userId": "usr_rm105210",
+      "username": "105210",
+      "role": "RM",
+      "rmCode": "105210",
+      "action": "PASSWORD_CHANGE",
+      "details": "User 105210 successfully updated their password in database and sheet",
+      "id": "log_1791023345918_50shz",
+      "timestamp": "2026-10-03T10:29:05.918Z"
+    },
+    {
+      "userId": "usr_rm105210",
+      "username": "105210",
+      "role": "RM",
+      "rmCode": "105210",
+      "action": "LOGIN",
+      "details": "User 105210 (RM) logged in successfully",
+      "id": "log_1791023345897_mrfpj",
+      "timestamp": "2026-10-03T10:29:05.897Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "rmCode": "105210",
+      "action": "PASSWORD_CHANGE",
+      "details": "Admin/Mentor reset password for RM 105210",
+      "id": "log_1791023345862_4aad9",
+      "timestamp": "2026-10-03T10:29:05.862Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1791023345822_hgga4",
+      "timestamp": "2026-10-03T10:29:05.822Z"
+    },
+    {
+      "userId": "usr_rm104393",
+      "username": "104393",
+      "role": "RM",
+      "rmCode": "104393",
+      "action": "LOGIN",
+      "details": "User 104393 (RM) logged in successfully",
+      "id": "log_1791023306295_5dvc0",
+      "timestamp": "2026-10-03T10:28:26.295Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "rmCode": "104393",
+      "action": "PASSWORD_CHANGE",
+      "details": "Admin/Mentor reset password for RM 104393",
+      "id": "log_1791023306281_i1oht",
+      "timestamp": "2026-10-03T10:28:26.281Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1791023306250_qvucj",
+      "timestamp": "2026-10-03T10:28:26.250Z"
+    },
+    {
+      "userId": "usr_rm106880",
+      "username": "106880",
+      "role": "RM",
+      "rmCode": "106880",
+      "action": "LOGIN",
+      "details": "User 106880 (RM) logged in successfully",
+      "id": "log_1791022676463_ae7cm",
+      "timestamp": "2026-10-03T10:17:56.463Z"
+    },
+    {
+      "userId": "usr_rm105210",
+      "username": "105210",
+      "role": "RM",
+      "rmCode": "105210",
+      "action": "LOGIN",
+      "details": "User 105210 (RM) logged in successfully",
+      "id": "log_1791022676451_2pu00",
+      "timestamp": "2026-10-03T10:17:56.451Z"
+    },
+    {
+      "userId": "usr_rm104393",
+      "username": "104393",
+      "role": "RM",
+      "rmCode": "104393",
+      "action": "LOGIN",
+      "details": "User 104393 (RM) logged in successfully",
+      "id": "log_1791022676436_di185",
+      "timestamp": "2026-10-03T10:17:56.436Z"
+    },
+    {
+      "userId": "usr_rm104393",
+      "username": "104393",
+      "role": "RM",
+      "rmCode": "104393",
+      "action": "LOGIN",
+      "details": "User 104393 (RM) logged in successfully",
+      "id": "log_1791022676421_gu050",
+      "timestamp": "2026-10-03T10:17:56.421Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1791022676407_kup08",
+      "timestamp": "2026-10-03T10:17:56.407Z"
+    },
+    {
+      "userId": "usr_admin0",
+      "username": "Admin0",
+      "role": "Admin",
+      "action": "LOGIN",
+      "details": "User Admin0 (Admin) logged in successfully",
+      "id": "log_1791022676392_39vax",
+      "timestamp": "2026-10-03T10:17:56.392Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1791022676379_642di",
+      "timestamp": "2026-10-03T10:17:56.379Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1791022676354_2kcyq",
+      "timestamp": "2026-10-03T10:17:56.354Z"
+    },
+    {
+      "userId": "usr_rm104393",
+      "username": "104393",
+      "role": "RM",
+      "rmCode": "104393",
+      "action": "LOGIN",
+      "details": "User 104393 (RM) logged in successfully",
+      "id": "log_1791022457646_hwj5q",
+      "timestamp": "2026-10-03T10:14:17.646Z"
+    },
     {
       "userId": "usr_mentor12345",
       "username": "12345",

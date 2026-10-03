@@ -26,7 +26,7 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z",
-      "lastLogin": "2026-10-02T08:58:12.325Z",
+      "lastLogin": "2026-10-03T09:51:48.692Z",
       "preferences": {
         "themeColor": "emerald",
         "fontSize": "medium",
@@ -77,9 +77,47 @@
       "status": "Active",
       "mustChangePassword": false,
       "createdAt": "2026-09-27T04:45:19.303Z"
+    },
+    {
+      "id": "usr_rm_RM5842_e85f77",
+      "username": "RM5842",
+      "passwordHash": "972881cd23ea10e4852915cd145f788664b4cd6415b09357bcbbb03d9c72e1b003a84b82827cbf868244aae00e488f029d2d7429c8858e6f73adc8f8dede5f89",
+      "salt": "2905de7f8563661af57f294edf32bc8f",
+      "role": "RM",
+      "name": "Test Officer RM5842",
+      "mobile": "+8801755308342",
+      "email": "rm5842@ebl.com.bd",
+      "rmCode": "RM5842",
+      "status": "Active",
+      "mustChangePassword": true,
+      "createdAt": "2026-10-03T09:51:42.455Z",
+      "lastLogin": "2026-10-03T09:51:42.481Z"
     }
   ],
   "customerFiles": [
+    {
+      "fileId": "RM-2026-00101",
+      "customerName": "Engr. Shamim Reza",
+      "companyName": "Walton Hi-Tech Industries",
+      "officeAddress": "Dhaka",
+      "mobile": "+8801811223344",
+      "rmCode": "RM5842",
+      "rmName": "Test Officer RM5842",
+      "productType": "Credit Card",
+      "applicationStatus": "Collected",
+      "activeStatus": "N",
+      "pendingDocuments": [],
+      "remarks": "",
+      "cpvStatus": "Pending",
+      "cpvLastUpdatedBy": "RM5842",
+      "createdAt": "2026-10-03T09:51:42.493Z",
+      "updatedAt": "2026-10-03T09:51:44.440Z",
+      "createdBy": "RM5842",
+      "updatedBy": "RM5842",
+      "isDeleted": false,
+      "sheetsSyncStatus": "Synced",
+      "sheetsSyncedAt": "2026-10-03T09:51:44.440Z"
+    },
     {
       "fileId": "EBL-2026-00101",
       "customerName": "Shahidul Alam",
@@ -101,14 +139,14 @@
       "cpvRemarks": "Office verified in person. Customer is Senior GM.",
       "cpvLastUpdatedBy": "Admin0",
       "createdAt": "2026-09-18T10:30:00+06:00",
-      "updatedAt": "2026-10-02T08:58:05.990Z",
+      "updatedAt": "2026-10-03T09:46:15.569Z",
       "createdBy": "104393",
       "updatedBy": "Admin0",
       "submittedAt": "2026-09-19T11:00:00+06:00",
       "approvedAt": "2026-09-22T14:15:00+06:00",
       "isDeleted": false,
       "sheetsSyncStatus": "Synced",
-      "sheetsSyncedAt": "2026-10-02T08:58:05.990Z"
+      "sheetsSyncedAt": "2026-10-03T09:46:15.569Z"
     },
     {
       "fileId": "EBL-2026-00102",
@@ -129,14 +167,14 @@
       "remarks": "Admin Note: Updated with urgent query.",
       "cpvStatus": "Pending",
       "createdAt": "2026-09-24T09:00:00+06:00",
-      "updatedAt": "2026-10-02T08:58:05.990Z",
+      "updatedAt": "2026-10-03T09:46:15.570Z",
       "createdBy": "104393",
       "updatedBy": "Admin0",
       "submittedAt": "2026-09-24T09:30:00+06:00",
       "isDeleted": false,
       "sheetsSyncStatus": "Synced",
       "cpvLastUpdatedBy": "Admin0",
-      "sheetsSyncedAt": "2026-10-02T08:58:05.990Z"
+      "sheetsSyncedAt": "2026-10-03T09:46:15.569Z"
     },
     {
       "fileId": "EBL-2026-00103",
@@ -159,13 +197,13 @@
       "cpvAddress": "House 6, Road 137, Gulshan-1, Dhaka-1212",
       "cpvRemarks": "Business outlet confirmed.",
       "createdAt": "2026-09-21T11:45:00+06:00",
-      "updatedAt": "2026-10-02T08:58:05.991Z",
+      "updatedAt": "2026-10-03T09:46:15.570Z",
       "createdBy": "104393",
       "updatedBy": "Admin0",
       "submittedAt": "2026-09-21T15:00:00+06:00",
       "isDeleted": false,
       "sheetsSyncStatus": "Synced",
-      "sheetsSyncedAt": "2026-10-02T08:58:05.990Z"
+      "sheetsSyncedAt": "2026-10-03T09:46:15.569Z"
     },
     {
       "fileId": "EBL-2026-00104",
@@ -182,14 +220,14 @@
       "remarks": "Limit enhanced from 300K to 600K BDT based on excellent credit turnover.",
       "cpvStatus": "Not Required",
       "createdAt": "2026-09-15T14:10:00+06:00",
-      "updatedAt": "2026-10-02T08:58:05.991Z",
+      "updatedAt": "2026-10-03T09:46:15.570Z",
       "createdBy": "105210",
       "updatedBy": "105210",
       "submittedAt": "2026-09-15T16:00:00+06:00",
       "approvedAt": "2026-09-18T10:00:00+06:00",
       "isDeleted": false,
       "sheetsSyncStatus": "Synced",
-      "sheetsSyncedAt": "2026-10-02T08:58:05.990Z"
+      "sheetsSyncedAt": "2026-10-03T09:46:15.569Z"
     },
     {
       "fileId": "EBL-2026-00105",
@@ -211,13 +249,13 @@
       "cpvAddress": "Bashundhara R/A, Dhaka",
       "cpvRemarks": "Residence & Office confirmed.",
       "createdAt": "2026-09-22T09:30:00+06:00",
-      "updatedAt": "2026-10-02T08:58:05.992Z",
+      "updatedAt": "2026-10-03T09:46:15.571Z",
       "createdBy": "105210",
       "updatedBy": "105210",
       "submittedAt": "2026-09-22T14:00:00+06:00",
       "isDeleted": false,
       "sheetsSyncStatus": "Synced",
-      "sheetsSyncedAt": "2026-10-02T08:58:05.990Z"
+      "sheetsSyncedAt": "2026-10-03T09:46:15.569Z"
     },
     {
       "fileId": "EBL-2026-00106",
@@ -236,17 +274,75 @@
       "remarks": "Primary credit card split application processed.",
       "cpvStatus": "Not Required",
       "createdAt": "2026-09-25T11:15:00+06:00",
-      "updatedAt": "2026-10-02T08:58:05.992Z",
+      "updatedAt": "2026-10-03T09:46:15.571Z",
       "createdBy": "106880",
       "updatedBy": "106880",
       "submittedAt": "2026-09-25T11:15:00+06:00",
       "isDeleted": false,
       "sheetsSyncStatus": "Synced",
-      "sheetsSyncedAt": "2026-10-02T08:58:05.990Z"
+      "sheetsSyncedAt": "2026-10-03T09:46:15.569Z"
     }
   ],
   "attachments": [],
   "auditLogs": [
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1791021108692_rqrgn",
+      "timestamp": "2026-10-03T09:51:48.692Z"
+    },
+    {
+      "userId": "usr_rm_RM5842_e85f77",
+      "username": "RM5842",
+      "role": "RM",
+      "action": "CREATE",
+      "fileId": "RM-2026-00101",
+      "rmCode": "RM5842",
+      "details": "Created customer file RM-2026-00101 for Engr. Shamim Reza (Credit Card)",
+      "id": "log_1791021102494_rxyxn",
+      "timestamp": "2026-10-03T09:51:42.494Z"
+    },
+    {
+      "userId": "usr_rm_RM5842_e85f77",
+      "username": "RM5842",
+      "role": "RM",
+      "rmCode": "RM5842",
+      "action": "LOGIN",
+      "details": "User RM5842 (RM) logged in successfully",
+      "id": "log_1791021102482_m15k4",
+      "timestamp": "2026-10-03T09:51:42.482Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "rmCode": "RM5842",
+      "action": "CREATE",
+      "details": "Created new RM Account RM5842 (Test Officer RM5842). Status: Active. Temporary password issued.",
+      "id": "log_1791021102455_mxcfq",
+      "timestamp": "2026-10-03T09:51:42.455Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1791021102416_kg5qc",
+      "timestamp": "2026-10-03T09:51:42.416Z"
+    },
+    {
+      "userId": "usr_mentor12345",
+      "username": "12345",
+      "role": "Mentor",
+      "action": "LOGIN",
+      "details": "User 12345 (Mentor) logged in successfully",
+      "id": "log_1791020756034_itt6d",
+      "timestamp": "2026-10-03T09:45:56.034Z"
+    },
     {
       "userId": "usr_mentor12345",
       "username": "12345",
@@ -764,16 +860,16 @@
     ],
     "reportingWeekStart": "Saturday",
     "googleSpreadsheetId": "1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI",
-    "appsScriptWebAppUrl": "https://script.google.com/macros/s/AKfycbzVZIYYDfvj25AXPykT8yOZtqKcA-ExkkO-mZxa42DmRNPb79i2gad_phqykp2JNEY5/exec",
+    "appsScriptWebAppUrl": "https://script.google.com/macros/s/AKfycbzY95VDdGFwZRwVTINJWl7ldNubx6g2-NcA6os_g8xA2HvoENVQrocyHFIqPvIhwX5y/exec",
     "appsScriptSecretToken": "EBL_RM_SYNC_2026_SECURE_TOKEN_#99",
     "syncIntervalMinutes": 5,
     "lastSyncStatus": "Success",
     "updatedBy": "12345",
-    "updatedAt": "2026-10-02T08:58:05.992Z",
+    "updatedAt": "2026-10-03T09:51:44.441Z",
     "appName": "B2B team",
     "teamName": "Data Management System",
-    "lastSyncAttempt": "2026-10-02T08:57:50.652Z",
-    "lastSuccessfulSync": "2026-10-02T08:58:05.990Z"
+    "lastSyncAttempt": "2026-10-03T09:45:58.988Z",
+    "lastSuccessfulSync": "2026-10-03T09:51:44.440Z"
   },
   "notifications": [
     {

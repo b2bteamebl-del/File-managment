@@ -28,20 +28,21 @@ const STORAGE_KEY = 'team_data_system_client_db_v1';
 async function triggerAutoSyncToGoogleSheets(action: 'syncCustomerFile' | 'deleteCustomerFile', data: any) {
   try {
     const db = loadDb();
-    const url = db.settings?.appsScriptWebAppUrl?.trim();
+    const url = db.settings?.appsScriptWebAppUrl?.trim() || 'https://script.google.com/macros/s/AKfycbzY95VDdGFwZRwVTINJWl7ldNubx6g2-NcA6os_g8xA2HvoENVQrocyHFIqPvIhwX5y/exec';
     if (!url) return;
     const token = db.settings?.appsScriptSecretToken || 'EBL_RM_SYNC_2026_SECURE_TOKEN_#99';
-    await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action,
-        token,
-        spreadsheetId: db.settings?.googleSpreadsheetId || '1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI',
-        data: action === 'syncCustomerFile' ? data : undefined,
-        fileId: action === 'deleteCustomerFile' ? data : undefined,
-      }),
-      redirect: 'follow',
+    
+    // Use GET with query parameters to avoid CORS and redirect issues on Google Apps Script Web Apps
+    const query = new URLSearchParams({
+      action,
+      token,
+      data: action === 'syncCustomerFile' ? JSON.stringify(data) : undefined as any,
+      fileId: action === 'deleteCustomerFile' ? String(data) : undefined as any,
+    });
+
+    await fetch(`${url}?${query.toString()}`, {
+      method: 'GET',
+      mode: 'no-cors',
     });
   } catch {
     // Background auto-sync failure is non-blocking
@@ -260,8 +261,8 @@ function getInitialDatabase(): ClientDatabase {
       teamName: 'Team Member Data Management System',
       appName: 'RM File Management & Team Member Data System',
       googleSpreadsheetId: '1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI',
-      appsScriptWebAppUrl: 'https://script.google.com/macros/s/AKfycby3wqRoiAtJx9ujAln9n8mFkmFTN1K0ncgQGpYeDMsx4OPcBaCbK78sHhnvvqqs6aue/exec',
-      appsScriptSecretToken: 'RM_TEAM_SYNC_2026_SECURE_TOKEN_#99',
+      appsScriptWebAppUrl: 'https://script.google.com/macros/s/AKfycbzY95VDdGFwZRwVTINJWl7ldNubx6g2-NcA6os_g8xA2HvoENVQrocyHFIqPvIhwX5y/exec',
+      appsScriptSecretToken: 'EBL_RM_SYNC_2026_SECURE_TOKEN_#99',
       productTypes: [
         'Credit Card',
         'Personal Loan',

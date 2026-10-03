@@ -1,9 +1,6 @@
 import { CustomerFile, RMProfile, AuditLog, AppSettings, UserRole, User, UserLocation, FileAttachment, RMNotification, SMSLog } from '../types/index.js';
-import { clientDb } from './clientDb.js';
 
 const TOKEN_KEY = 'rm_auth_token';
-
-let clientDbMode = false;
 
 export function getStoredToken(): string | null {
   return localStorage.getItem(TOKEN_KEY) || localStorage.getItem('ebl_auth_token') || localStorage.getItem('client_session_token');
@@ -15,15 +12,13 @@ export function setStoredToken(token: string): void {
 
 export function clearStoredToken(): void {
   localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem('ebl_auth_token');
   localStorage.removeItem('client_session_user');
   localStorage.removeItem('client_session_token');
+  localStorage.removeItem('user');
 }
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  if (clientDbMode) {
-    throw new Error('CLIENT_DB_FALLBACK');
-  }
-
   const token = getStoredToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -34,23 +29,14 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  let res: Response;
-  try {
-    res = await fetch(endpoint, {
-      ...options,
-      headers,
-    });
-  } catch (netErr: any) {
-    // Network failure (server not running or offline)
-    clientDbMode = true;
-    throw new Error('CLIENT_DB_FALLBACK');
-  }
+  const res = await fetch(endpoint, {
+    ...options,
+    credentials: 'same-origin',
+    headers,
+  });
 
-  // If server returns HTML (SPA fallback or 404 HTML page on static hosts like GitHub Pages / Vercel static)
-  const contentType = res.headers.get('content-type') || '';
-  if (contentType.includes('text/html') || res.status === 404 || res.status === 502) {
-    clientDbMode = true;
-    throw new Error('CLIENT_DB_FALLBACK');
+  if (res.status === 401 && !endpoint.includes('/api/auth/login')) {
+    clearStoredToken();
   }
 
   if (!res.ok) {
@@ -61,7 +47,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
         errMsg = errJson.error || errJson.message;
       }
     } catch {
-      // not json
+      // not JSON
     }
     throw new Error(errMsg);
   }
@@ -72,37 +58,18 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 export const api = {
   // Auth
   login: async (username: string, password: string) => {
-    try {
-      const res = await request<{ token: string; user: User }>('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ username, password }),
-      });
-      clientDbMode = false;
-      setStoredToken(res.token);
-      localStorage.setItem('client_session_user', JSON.stringify(res.user));
-      localStorage.setItem('user', JSON.stringify(res.user));
-      return res;
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        console.info('[Auth] Server API unavailable. Operating in resilient client database mode.');
-        const fallbackRes = await clientDb.login(username, password);
-        localStorage.setItem('client_session_token', fallbackRes.token);
-        localStorage.setItem('client_session_user', JSON.stringify(fallbackRes.user));
-        return fallbackRes;
-      }
-      throw err;
-    }
+    const res = await request<{ token: string; user: User }>('/api/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    });
+    setStoredToken(res.token);
+    localStorage.setItem('client_session_user', JSON.stringify(res.user));
+    localStorage.setItem('user', JSON.stringify(res.user));
+    return res;
   },
 
   getCurrentUser: async () => {
-    try {
-      return await request<{ user: User }>('/api/auth/me');
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.getCurrentUser();
-      }
-      throw err;
-    }
+    return await request<{ user: User }>('/api/auth/me');
   },
 
   getUserPreferences: async () => {
@@ -125,132 +92,64 @@ export const api = {
   },
 
   changePassword: async (newPassword: string, currentPassword?: string, username?: string, isForcedFirstLogin?: boolean) => {
-    try {
-      const res = await request<{ success: boolean; message: string; token?: string; user?: User }>('/api/auth/change-password', {
-        method: 'POST',
-        body: JSON.stringify({ newPassword, currentPassword, username, isForcedFirstLogin }),
-      });
-      if (res.token) {
-        setStoredToken(res.token);
-      }
-      if (res.user) {
-        localStorage.setItem('client_session_user', JSON.stringify(res.user));
-        localStorage.setItem('user', JSON.stringify(res.user));
-      }
-      return res;
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.changePassword(newPassword);
-      }
-      throw err;
+    const res = await request<{ success: boolean; message: string; token?: string; user?: User }>('/api/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ newPassword, currentPassword, username, isForcedFirstLogin }),
+    });
+    if (res.token) {
+      setStoredToken(res.token);
     }
+    if (res.user) {
+      localStorage.setItem('client_session_user', JSON.stringify(res.user));
+      localStorage.setItem('user', JSON.stringify(res.user));
+    }
+    return res;
   },
 
   // Customer Files
   getFiles: async (params: Record<string, string> = {}) => {
-    try {
-      const query = new URLSearchParams(params).toString();
-      return await request<{
-        data: CustomerFile[];
-        pagination: { total: number; page: number; pageSize: number; totalPages: number };
-      }>(`/api/files?${query}`);
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        const res = await clientDb.getCustomerFiles(params);
-        return {
-          data: res.files,
-          pagination: {
-            total: res.total,
-            page: res.page,
-            pageSize: parseInt(params.limit || '15', 10),
-            totalPages: res.totalPages,
-          },
-        };
-      }
-      throw err;
-    }
+    const query = new URLSearchParams(params).toString();
+    return await request<{
+      data: CustomerFile[];
+      pagination: { total: number; page: number; pageSize: number; totalPages: number };
+    }>(`/api/files?${query}`);
   },
 
   getFileById: async (fileId: string) => {
-    try {
-      return await request<CustomerFile>(`/api/files/${fileId}`);
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        const res = await clientDb.getCustomerFiles({ search: fileId });
-        const file = res.files.find(f => f.fileId === fileId);
-        if (!file) throw new Error('File not found');
-        return file;
-      }
-      throw err;
-    }
+    return await request<CustomerFile>(`/api/files/${fileId}`);
   },
 
   createFile: async (fileData: Partial<CustomerFile>) => {
-    try {
-      return await request<CustomerFile>('/api/files', {
-        method: 'POST',
-        body: JSON.stringify(fileData),
-      });
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        const res = await clientDb.createCustomerFile(fileData);
-        return res.file;
-      }
-      throw err;
-    }
+    return await request<CustomerFile>('/api/files', {
+      method: 'POST',
+      body: JSON.stringify(fileData),
+    });
   },
 
   updateFile: async (fileId: string, updates: Partial<CustomerFile>) => {
-    try {
-      return await request<CustomerFile>(`/api/files/${fileId}`, {
-        method: 'PUT',
-        body: JSON.stringify(updates),
-      });
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        const res = await clientDb.updateCustomerFile(fileId, updates);
-        return res.file;
-      }
-      throw err;
-    }
+    return await request<CustomerFile>(`/api/files/${fileId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
   },
 
   deleteFile: async (fileId: string, permanent: boolean = false) => {
-    try {
-      return await request<{ success: boolean; message: string }>(`/api/files/${fileId}?permanent=${permanent}`, {
-        method: 'DELETE',
-      });
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.deleteCustomerFile(fileId, permanent);
-      }
-      throw err;
-    }
+    return await request<{ success: boolean; message: string }>(`/api/files/${fileId}?permanent=${permanent}`, {
+      method: 'DELETE',
+    });
   },
 
   uploadAttachment: async (fileId: string, payload: { fileName: string; fileType: string; dataUrl: string; category: string }) => {
-    try {
-      return await request<any>(`/api/files/${fileId}/attachments`, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        const dummyFile = new File([''], payload.fileName, { type: payload.fileType });
-        return await clientDb.uploadAttachment(fileId, dummyFile, payload.category);
-      }
-      throw err;
-    }
+    return await request<any>(`/api/files/${fileId}/attachments`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
 
   deleteAttachment: async (attachmentId: string) => {
-    try {
-      return await request<{ success: boolean }>(`/api/files/attachments/${attachmentId}`, {
-        method: 'DELETE',
-      });
-    } catch (err: any) {
-      return { success: true };
-    }
+    return await request<{ success: boolean }>(`/api/files/attachments/${attachmentId}`, {
+      method: 'DELETE',
+    });
   },
 
   getAttachmentPreviewUrl: (attachmentId: string) => {
@@ -265,88 +164,41 @@ export const api = {
 
   // RM Management
   getRMs: async () => {
-    try {
-      return await request<(RMProfile & { fileCount: number; approvedCount: number })[]>('/api/rms');
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.getRMs();
-      }
-      throw err;
-    }
+    return await request<(RMProfile & { fileCount: number; approvedCount: number })[]>('/api/rms');
   },
 
   createRM: async (data: { rmCode: string; rmName: string; mobile: string; email: string; officeAddress?: string; initialPassword?: string }) => {
-    try {
-      return await request<{ message: string; rmProfile: RMProfile; temporaryPassword: string }>('/api/rms', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        const tempPass = data.initialPassword || data.rmCode;
-        return {
-          message: 'RM profile created in client database',
-          rmProfile: {
-            rmCode: data.rmCode,
-            rmName: data.rmName,
-            mobile: data.mobile,
-            email: data.email,
-            officeAddress: data.officeAddress || 'Main Office',
-            accountStatus: 'Active',
-            createdAt: new Date().toISOString(),
-          },
-          temporaryPassword: tempPass,
-        };
-      }
-      throw err;
-    }
+    return await request<{ message: string; rmProfile: RMProfile; temporaryPassword: string }>('/api/rms', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
   updateRM: async (rmCode: string, data: { rmName?: string; mobile?: string; email?: string }) => {
-    try {
-      return await request<{ success: boolean; user: any }>(`/api/rms/${rmCode}`, {
-        method: 'PUT',
-        body: JSON.stringify(data),
-      });
-    } catch (err: any) {
-      return { success: true, user: data };
-    }
+    return await request<{ success: boolean; user: any }>(`/api/rms/${rmCode}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
   },
 
   updateRMStatus: async (rmCode: string, status: 'Active' | 'Inactive' | 'Suspended') => {
-    try {
-      return await request<{ success: boolean; message: string }>(`/api/rms/${rmCode}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status }),
-      });
-    } catch (err: any) {
-      return { success: true, message: `RM ${rmCode} status updated to ${status}` };
-    }
+    return await request<{ success: boolean; message: string }>(`/api/rms/${rmCode}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
   },
 
   resetRMPassword: async (rmCode: string, newPassword?: string) => {
-    try {
-      return await request<{ success: boolean; message: string; temporaryPassword: string }>(`/api/rms/${rmCode}/reset-password`, {
-        method: 'POST',
-        body: JSON.stringify({ newPassword }),
-      });
-    } catch (err: any) {
-      const pw = newPassword || rmCode;
-      return { success: true, message: `Password reset for ${rmCode}`, temporaryPassword: pw };
-    }
+    return await request<{ success: boolean; message: string; temporaryPassword: string }>(`/api/rms/${rmCode}/reset-password`, {
+      method: 'POST',
+      body: JSON.stringify({ newPassword }),
+    });
   },
 
   // Reports & Summary
   getSummary: async (params: { period?: string; rmCode?: string } = {}) => {
-    try {
-      const query = new URLSearchParams(params).toString();
-      return await request<any>(`/api/reports/summary?${query}`);
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.getSummary(params.period as any);
-      }
-      throw err;
-    }
+    const query = new URLSearchParams(params).toString();
+    return await request<any>(`/api/reports/summary?${query}`);
   },
 
   getExportUrl: (format: 'csv' | 'xlsx' | 'pdf', params: Record<string, string> = {}) => {
@@ -385,90 +237,48 @@ export const api = {
 
   // Settings
   getSettings: async () => {
-    try {
-      return await request<AppSettings>('/api/settings');
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.getSettings();
-      }
-      throw err;
-    }
+    return await request<AppSettings>('/api/settings');
   },
 
   updateSettings: async (updates: Partial<AppSettings>) => {
-    try {
-      return await request<AppSettings>('/api/settings', {
-        method: 'PUT',
-        body: JSON.stringify(updates),
-      });
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.updateSettings(updates);
-      }
-      throw err;
-    }
+    return await request<AppSettings>('/api/settings', {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
   },
 
   // Google Sheets Sync
   getSyncStatus: async () => {
-    try {
-      return await request<{
-        spreadsheetId: string;
-        appsScriptConfigured: boolean;
-        lastSyncStatus: string;
-        lastSuccessfulSync?: string;
-        lastSyncAttempt?: string;
-        lastSyncError?: string;
-        stats: { totalFiles: number; syncedCount: number; pendingCount: number; failedCount: number };
-      }>('/api/sync/status');
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.getSyncStatus();
-      }
-      throw err;
-    }
+    return await request<{
+      spreadsheetId: string;
+      appsScriptConfigured: boolean;
+      lastSyncStatus: string;
+      lastSuccessfulSync?: string;
+      lastSyncAttempt?: string;
+      lastSyncError?: string;
+      stats: { totalFiles: number; syncedCount: number; pendingCount: number; failedCount: number };
+    }>('/api/sync/status');
   },
 
   testSyncConnection: async (url?: string, token?: string) => {
-    try {
-      return await request<any>('/api/sync/test', {
-        method: 'POST',
-        body: JSON.stringify({ url, token }),
-      });
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.testSyncConnection(url || '', token || '');
-      }
-      throw err;
-    }
+    return await request<any>('/api/sync/test', {
+      method: 'POST',
+      body: JSON.stringify({ url, token }),
+    });
   },
 
   initSheets: async (url?: string, token?: string) => {
-    try {
-      return await request<any>('/api/sync/init-sheets', {
-        method: 'POST',
-        body: JSON.stringify({ url, token }),
-      });
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.initSheets(url || '', token || '');
-      }
-      throw err;
-    }
+    return await request<any>('/api/sync/init-sheets', {
+      method: 'POST',
+      body: JSON.stringify({ url, token }),
+    });
   },
 
   triggerSync: async (params?: { url?: string; token?: string }) => {
-    try {
-      return await request<{ success: boolean; message: string; results?: any }>('/api/sync/trigger', {
-        method: 'POST',
-        body: params ? JSON.stringify(params) : undefined,
-      });
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.triggerSync();
-      }
-      throw err;
-    }
+    return await request<{ success: boolean; message: string; results?: any }>('/api/sync/trigger', {
+      method: 'POST',
+      body: params ? JSON.stringify(params) : undefined,
+    });
   },
 
   getScriptCode: async () => {
@@ -481,135 +291,57 @@ export const api = {
 
   // Audit Logs
   getAuditLogs: async (params: Record<string, string> = {}): Promise<AuditLog[]> => {
-    try {
-      const query = new URLSearchParams(params).toString();
-      return await request<AuditLog[]>(`/api/audit-logs?${query}`);
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.getAuditLogs();
-      }
-      return [];
-    }
+    const query = new URLSearchParams(params).toString();
+    return await request<AuditLog[]>(`/api/audit-logs?${query}`);
   },
 
   // Location Monitoring
   recordLocationPing: async (data: { latitude: number; longitude: number; accuracy?: number; address?: string; actionContext?: string }) => {
-    try {
-      return await request<{ success: boolean; location: any }>('/api/locations/ping', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        await clientDb.recordLocationPing(data);
-        return { success: true, location: data };
-      }
-      return { success: false, location: null };
-    }
+    return await request<{ success: boolean; location: any }>('/api/locations/ping', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   },
 
   getLatestLocations: async (): Promise<UserLocation[]> => {
-    try {
-      return await request<UserLocation[]>('/api/locations/latest');
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.getLatestLocations();
-      }
-      return [];
-    }
+    return await request<UserLocation[]>('/api/locations/latest');
   },
 
   getLocationHistory: async (): Promise<UserLocation[]> => {
-    try {
-      return await request<UserLocation[]>('/api/locations/history');
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.getLocationHistory();
-      }
-      return [];
-    }
+    return await request<UserLocation[]>('/api/locations/history');
   },
 
   // RM Notifications
   getNotifications: async (): Promise<{ notifications: RMNotification[]; unreadCount: number }> => {
-    try {
-      return await request<{ notifications: RMNotification[]; unreadCount: number }>('/api/notifications');
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.getNotifications();
-      }
-      return { notifications: [], unreadCount: 0 };
-    }
+    return await request<{ notifications: RMNotification[]; unreadCount: number }>('/api/notifications');
   },
 
   markNotificationAsRead: async (id: string): Promise<{ success: boolean }> => {
-    try {
-      return await request<{ success: boolean }>(`/api/notifications/${id}/read`, {
-        method: 'PATCH',
-      });
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.markNotificationAsRead(id);
-      }
-      return { success: true };
-    }
+    return await request<{ success: boolean }>(`/api/notifications/${id}/read`, {
+      method: 'PATCH',
+    });
   },
 
   markAllNotificationsAsRead: async (): Promise<{ success: boolean }> => {
-    try {
-      return await request<{ success: boolean }>('/api/notifications/read-all', {
-        method: 'PATCH',
-      });
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.markAllNotificationsAsRead();
-      }
-      return { success: true };
-    }
+    return await request<{ success: boolean }>('/api/notifications/read-all', {
+      method: 'PATCH',
+    });
   },
 
   deleteNotification: async (id: string): Promise<{ success: boolean }> => {
-    try {
-      return await request<{ success: boolean }>(`/api/notifications/${id}`, {
-        method: 'DELETE',
-      });
-    } catch (err: any) {
-      if (err.message === 'CLIENT_DB_FALLBACK' || clientDbMode) {
-        return await clientDb.deleteNotification(id);
-      }
-      return { success: true };
-    }
+    return await request<{ success: boolean }>(`/api/notifications/${id}`, {
+      method: 'DELETE',
+    });
   },
 
   // Mobile SMS Dispatch API
   getSmsLogs: async (): Promise<SMSLog[]> => {
-    try {
-      return await request<SMSLog[]>('/api/sms/logs');
-    } catch {
-      return [];
-    }
+    return await request<SMSLog[]>('/api/sms/logs');
   },
 
   sendTestSms: async (): Promise<{ success: boolean; message: string; log: SMSLog }> => {
-    try {
-      return await request<{ success: boolean; message: string; log: SMSLog }>('/api/sms/test', {
-        method: 'POST',
-      });
-    } catch (err: any) {
-      return {
-        success: true,
-        message: 'Mobile test SMS chime and alert triggered locally!',
-        log: {
-          id: `sms_local_${Date.now()}`,
-          recipientMobile: '+8801711000000',
-          recipientRmCode: 'CURRENT_USER',
-          recipientName: 'Team Member',
-          message: '[EBL ALERT] Test mobile notification alert like SMS.',
-          status: 'Delivered',
-          gateway: 'LOCAL_MOBILE_CHIME',
-          timestamp: new Date().toISOString(),
-        },
-      };
-    }
+    return await request<{ success: boolean; message: string; log: SMSLog }>('/api/sms/test', {
+      method: 'POST',
+    });
   },
 };

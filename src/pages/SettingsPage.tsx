@@ -77,7 +77,7 @@ export const SettingsPage: React.FC = () => {
         setAppName(data.appName || 'RM File Management & Team Member Data System');
         setTeamName(data.teamName || 'Team Member Data Management System');
         setGoogleSpreadsheetId(data.googleSpreadsheetId || '1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI');
-        setAppsScriptWebAppUrl(data.appsScriptWebAppUrl || 'https://script.google.com/macros/s/AKfycby3wqRoiAtJx9ujAln9n8mFkmFTN1K0ncgQGpYeDMsx4OPcBaCbK78sHhnvvqqs6aue/exec');
+        setAppsScriptWebAppUrl(data.appsScriptWebAppUrl || 'https://script.google.com/macros/s/AKfycbzY95VDdGFwZRwVTINJWl7ldNubx6g2-NcA6os_g8xA2HvoENVQrocyHFIqPvIhwX5y/exec');
         setProductTypes(data.productTypes || []);
         setPendingDocOptions(data.pendingDocOptions || []);
         setReportingWeekStart(data.reportingWeekStart || 'Saturday');

@@ -315,8 +315,8 @@ function createInitialDatabase() {
     ],
     reportingWeekStart: "Saturday",
     googleSpreadsheetId: "1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI",
-    appsScriptWebAppUrl: "https://script.google.com/macros/s/AKfycby3wqRoiAtJx9ujAln9n8mFkmFTN1K0ncgQGpYeDMsx4OPcBaCbK78sHhnvvqqs6aue/exec",
-    appsScriptSecretToken: "RM_TEAM_SYNC_2026_SECURE_TOKEN_#99",
+    appsScriptWebAppUrl: "https://script.google.com/macros/s/AKfycbzY95VDdGFwZRwVTINJWl7ldNubx6g2-NcA6os_g8xA2HvoENVQrocyHFIqPvIhwX5y/exec",
+    appsScriptSecretToken: "EBL_RM_SYNC_2026_SECURE_TOKEN_#99",
     syncIntervalMinutes: 5,
     lastSyncStatus: "Idle",
     updatedBy: "System",
@@ -687,7 +687,7 @@ var SheetsSyncService = class {
    */
   static async postToAppsScript(action, payload) {
     const settings = db.getSettings();
-    const url = settings.appsScriptWebAppUrl?.trim() || process.env.APPS_SCRIPT_URL?.trim() || process.env.GOOGLE_APPS_SCRIPT_URL?.trim();
+    const url = settings.appsScriptWebAppUrl?.trim() || process.env.APPS_SCRIPT_URL?.trim() || process.env.GOOGLE_APPS_SCRIPT_URL?.trim() || "https://script.google.com/macros/s/AKfycbzY95VDdGFwZRwVTINJWl7ldNubx6g2-NcA6os_g8xA2HvoENVQrocyHFIqPvIhwX5y/exec";
     const token = settings.appsScriptSecretToken || "EBL_RM_SYNC_2026_SECURE_TOKEN_#99";
     if (!url) {
       throw new Error("Google Apps Script Web App URL is not configured. Please paste your deployed Web App URL in App Settings or Google Sheets panel.");
@@ -758,7 +758,7 @@ var SheetsSyncService = class {
    */
   static async testConnection(url, token) {
     const settings = db.getSettings();
-    const targetUrl = url || settings.appsScriptWebAppUrl?.trim();
+    const targetUrl = url || settings.appsScriptWebAppUrl?.trim() || "https://script.google.com/macros/s/AKfycbzY95VDdGFwZRwVTINJWl7ldNubx6g2-NcA6os_g8xA2HvoENVQrocyHFIqPvIhwX5y/exec";
     const targetToken = token || settings.appsScriptSecretToken || "EBL_RM_SYNC_2026_SECURE_TOKEN_#99";
     if (!targetUrl) {
       return {
@@ -812,7 +812,7 @@ var SheetsSyncService = class {
    */
   static async initSheets(url, token) {
     const settings = db.getSettings();
-    const targetUrl = url || settings.appsScriptWebAppUrl?.trim();
+    const targetUrl = url || settings.appsScriptWebAppUrl?.trim() || "https://script.google.com/macros/s/AKfycbzY95VDdGFwZRwVTINJWl7ldNubx6g2-NcA6os_g8xA2HvoENVQrocyHFIqPvIhwX5y/exec";
     const targetToken = token || settings.appsScriptSecretToken || "EBL_RM_SYNC_2026_SECURE_TOKEN_#99";
     if (!targetUrl) {
       return {

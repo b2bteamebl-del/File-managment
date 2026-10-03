@@ -56,8 +56,8 @@ export const SheetsSyncPage: React.FC = () => {
       setSyncStatus(statusRes);
       setSettings(settingsRes);
       setSpreadsheetId(settingsRes.googleSpreadsheetId || '1lb9Wou10ecl28EUgaXD2cA3YCNY7nNHp1BOFrrLezqI');
-      setWebAppUrl(settingsRes.appsScriptWebAppUrl || 'https://script.google.com/macros/s/AKfycby3wqRoiAtJx9ujAln9n8mFkmFTN1K0ncgQGpYeDMsx4OPcBaCbK78sHhnvvqqs6aue/exec');
-      setSecretToken(settingsRes.appsScriptSecretToken || 'RM_TEAM_SYNC_2026_SECURE_TOKEN_#99');
+      setWebAppUrl(settingsRes.appsScriptWebAppUrl || 'https://script.google.com/macros/s/AKfycbzY95VDdGFwZRwVTINJWl7ldNubx6g2-NcA6os_g8xA2HvoENVQrocyHFIqPvIhwX5y/exec');
+      setSecretToken(settingsRes.appsScriptSecretToken || 'EBL_RM_SYNC_2026_SECURE_TOKEN_#99');
     } catch (e) {
       console.error(e);
     } finally {

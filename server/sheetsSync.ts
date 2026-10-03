@@ -19,7 +19,7 @@ export class SheetsSyncService {
    */
   public static async postToAppsScript(action: string, payload: any): Promise<any> {
     const settings = db.getSettings();
-    const url = settings.appsScriptWebAppUrl?.trim() || process.env.APPS_SCRIPT_URL?.trim() || process.env.GOOGLE_APPS_SCRIPT_URL?.trim();
+    const url = settings.appsScriptWebAppUrl?.trim() || process.env.APPS_SCRIPT_URL?.trim() || process.env.GOOGLE_APPS_SCRIPT_URL?.trim() || 'https://script.google.com/macros/s/AKfycbzY95VDdGFwZRwVTINJWl7ldNubx6g2-NcA6os_g8xA2HvoENVQrocyHFIqPvIhwX5y/exec';
     const token = settings.appsScriptSecretToken || 'EBL_RM_SYNC_2026_SECURE_TOKEN_#99';
 
     if (!url) {
@@ -101,7 +101,7 @@ export class SheetsSyncService {
    */
   public static async testConnection(url?: string, token?: string): Promise<SyncResult> {
     const settings = db.getSettings();
-    const targetUrl = url || settings.appsScriptWebAppUrl?.trim();
+    const targetUrl = url || settings.appsScriptWebAppUrl?.trim() || 'https://script.google.com/macros/s/AKfycbzY95VDdGFwZRwVTINJWl7ldNubx6g2-NcA6os_g8xA2HvoENVQrocyHFIqPvIhwX5y/exec';
     const targetToken = token || settings.appsScriptSecretToken || 'EBL_RM_SYNC_2026_SECURE_TOKEN_#99';
 
     if (!targetUrl) {
@@ -158,7 +158,7 @@ export class SheetsSyncService {
    */
   public static async initSheets(url?: string, token?: string): Promise<SyncResult> {
     const settings = db.getSettings();
-    const targetUrl = url || settings.appsScriptWebAppUrl?.trim();
+    const targetUrl = url || settings.appsScriptWebAppUrl?.trim() || 'https://script.google.com/macros/s/AKfycbzY95VDdGFwZRwVTINJWl7ldNubx6g2-NcA6os_g8xA2HvoENVQrocyHFIqPvIhwX5y/exec';
     const targetToken = token || settings.appsScriptSecretToken || 'EBL_RM_SYNC_2026_SECURE_TOKEN_#99';
 
     if (!targetUrl) {
